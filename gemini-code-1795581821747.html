@@ -1,0 +1,3370 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="theme-color" content="#09090b" />
+  <title>ZERO-MESH CCTV | 무설정 동일 와이파이 다중 무선 관제센터</title>
+  <script src="https://unpkg.com/peerjs@1.5.5/dist/peerjs.min.js"></script>
+  <style>
+    :root {
+      --bg: #09090b;
+      --surface: #111318;
+      --surface-2: #181c24;
+      --border: #1e293b;
+      --border-strong: #334155;
+      --text: #f1f5f9;
+      --text-muted: #94a3b8;
+      --emerald: #10b981;
+      --emerald-dim: rgba(16, 185, 129, 0.15);
+      --danger: #ef4444;
+      --danger-dim: rgba(239, 68, 68, 0.16);
+      --warn: #f59e0b;
+      --warn-dim: rgba(245, 158, 11, 0.16);
+      --info: #3b82f6;
+      --info-dim: rgba(59, 130, 246, 0.16);
+      --radius: 12px;
+      --radius-sm: 8px;
+    }
+
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Pretendard", "Segoe UI", Roboto, "Noto Sans KR", sans-serif;
+      font-size: 14px;
+      line-height: 1.45;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    button, input, select {
+      font-family: inherit;
+      font-size: 13px;
+      color: var(--text);
+      outline: none;
+    }
+
+    button {
+      cursor: pointer;
+      border: 1px solid var(--border-strong);
+      background: var(--surface-2);
+      border-radius: var(--radius-sm);
+      padding: 7px 11px;
+      font-weight: 600;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 5px;
+      transition: background 0.15s, border-color 0.15s, transform 0.08s;
+      user-select: none;
+    }
+
+    button:hover:not(:disabled) {
+      background: #222834;
+      border-color: #475569;
+    }
+
+    button:active:not(:disabled) {
+      transform: scale(0.98);
+    }
+
+    button:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+    }
+
+    button.primary {
+      background: var(--emerald);
+      border-color: var(--emerald);
+      color: #04130d;
+    }
+
+    button.primary:hover:not(:disabled) {
+      background: #0ea572;
+    }
+
+    button.danger {
+      background: var(--danger-dim);
+      border-color: var(--danger);
+      color: #fca5a5;
+    }
+
+    button.danger.active, button.danger-solid {
+      background: var(--danger);
+      border-color: var(--danger);
+      color: #fff;
+    }
+
+    button.active {
+      background: var(--emerald-dim);
+      border-color: var(--emerald);
+      color: #6ee7b7;
+    }
+
+    button.warn-active {
+      background: var(--warn-dim);
+      border-color: var(--warn);
+      color: #fcd34d;
+    }
+
+    input[type="text"], select {
+      background: #0c0e12;
+      border: 1px solid var(--border-strong);
+      border-radius: var(--radius-sm);
+      padding: 7px 10px;
+      color: var(--text);
+    }
+
+    input[type="text"]:focus, select:focus {
+      border-color: var(--emerald);
+    }
+
+    input[type="range"] {
+      accent-color: var(--emerald);
+      cursor: pointer;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    /* 상단 헤더 */
+    header.topbar {
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      background: rgba(9, 9, 11, 0.92);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid var(--border);
+      padding: 10px 16px;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .brand-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--emerald);
+      box-shadow: 0 0 10px var(--emerald);
+    }
+
+    .brand-title {
+      font-weight: 800;
+      font-size: 15px;
+      letter-spacing: 0.4px;
+    }
+
+    .brand-sub {
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    .header-controls {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .channel-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      background: var(--surface);
+      border: 1px solid var(--border-strong);
+      border-radius: 999px;
+      padding: 5px 11px;
+      font-size: 12px;
+    }
+
+    .channel-pill code {
+      color: var(--emerald);
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-weight: 700;
+    }
+
+    .status-badge {
+      font-size: 11px;
+      padding: 4px 9px;
+      border-radius: 999px;
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .status-badge.online {
+      border-color: rgba(16, 185, 129, 0.5);
+      color: #6ee7b7;
+      background: var(--emerald-dim);
+    }
+
+    .status-badge.error {
+      border-color: rgba(239, 68, 68, 0.5);
+      color: #fca5a5;
+      background: var(--danger-dim);
+    }
+
+    /* 메인 컨테이너 */
+    main {
+      max-width: 1600px;
+      margin: 0 auto;
+      padding: 16px;
+    }
+
+    /* 초기 모드 선택 화면 */
+    .landing-wrap {
+      max-width: 820px;
+      margin: 28px auto;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+
+    .hero-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 22px;
+    }
+
+    .hero-card h1 {
+      margin: 0 0 8px;
+      font-size: 21px;
+    }
+
+    .hero-card p {
+      margin: 0;
+      color: var(--text-muted);
+    }
+
+    .net-info-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 10px;
+      margin-top: 16px;
+    }
+
+    .net-box {
+      background: #0c0e12;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 10px 12px;
+    }
+
+    .net-box .lbl {
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    .net-box .val {
+      font-size: 14px;
+      font-weight: 700;
+      margin-top: 2px;
+      color: var(--emerald);
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+
+    .mode-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 16px;
+    }
+
+    .mode-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 14px;
+      transition: border-color 0.2s;
+    }
+
+    .mode-card:hover {
+      border-color: var(--emerald);
+    }
+
+    .mode-card h2 {
+      margin: 0 0 6px;
+      font-size: 17px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .mode-card p {
+      margin: 0;
+      color: var(--text-muted);
+      font-size: 13px;
+    }
+
+    .form-row {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .form-row label {
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    /* 카메라 송출기 모드 UI */
+    .cam-view {
+      max-width: 780px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .cam-stage {
+      position: relative;
+      background: #000;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      aspect-ratio: 16 / 9;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    @media (max-width: 640px) {
+      .cam-stage {
+        aspect-ratio: 4 / 3;
+      }
+    }
+
+    .cam-stage video {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      background: #000;
+    }
+
+    .cam-hud-top {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      right: 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+      pointer-events: none;
+    }
+
+    .hud-tag {
+      background: rgba(9, 9, 11, 0.78);
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      padding: 4px 9px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 600;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .rec-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--emerald);
+      animation: pulse 1.4s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.3; }
+    }
+
+    .cam-banner-alert {
+      position: absolute;
+      bottom: 12px;
+      left: 12px;
+      right: 12px;
+      background: rgba(239, 68, 68, 0.92);
+      color: #fff;
+      padding: 10px 14px;
+      border-radius: 8px;
+      font-weight: 700;
+      text-align: center;
+      z-index: 5;
+    }
+
+    .cam-panel {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .btn-cluster {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    /* 관제센터(관리자 모드) 마스터 컨트롤 바 */
+    #adminSection:fullscreen,
+    #adminSection.console-fullscreen {
+      position: fixed;
+      inset: 0;
+      z-index: 500;
+      background: var(--bg);
+      padding: 16px;
+      overflow-y: auto;
+      width: 100vw;
+      height: 100dvh;
+    }
+
+    .master-bar {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 12px 14px;
+      margin-bottom: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .master-row {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 8px;
+      justify-content: space-between;
+    }
+
+    .master-group {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 7px;
+    }
+
+    .tts-master-box {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 7px;
+      flex: 1;
+      min-width: 260px;
+    }
+
+    .tts-master-box input[type="text"] {
+      flex: 1;
+      min-width: 170px;
+    }
+
+    .preset-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .preset-chips button {
+      font-size: 11px;
+      padding: 4px 8px;
+      background: #0c0e12;
+      color: var(--text-muted);
+      border-color: var(--border);
+    }
+
+    .preset-chips button:hover {
+      color: var(--text);
+      border-color: var(--emerald);
+    }
+
+    /* 다중 카메라 분할 그리드 */
+    .cam-grid {
+      display: grid;
+      gap: 14px;
+      grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+    }
+
+    .cam-grid.cols-1 {
+      grid-template-columns: minmax(0, 1fr);
+      max-width: 1120px;
+      margin: 0 auto;
+    }
+
+    .cam-grid.cols-2 {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .cam-grid.cols-3 {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .cam-grid.cols-4 {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+
+    @media (max-width: 900px) {
+      .cam-grid.cols-3, .cam-grid.cols-4 {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+
+    @media (max-width: 640px) {
+      .cam-grid, .cam-grid.cols-1, .cam-grid.cols-2, .cam-grid.cols-3, .cam-grid.cols-4 {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .empty-state {
+      grid-column: 1 / -1;
+      background: var(--surface);
+      border: 1px dashed var(--border-strong);
+      border-radius: var(--radius);
+      padding: 44px 20px;
+      text-align: center;
+      color: var(--text-muted);
+    }
+
+    /* 개별 카메라 카드 */
+    .cam-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      transition: border-color 0.2s;
+    }
+
+    .cam-card:fullscreen,
+    .cam-card.floating-fullscreen {
+      position: fixed;
+      inset: 0;
+      z-index: 950;
+      border-radius: 0;
+      border: none;
+      width: 100vw;
+      height: 100dvh;
+      max-width: none;
+      background: #050608;
+      overflow-y: auto;
+    }
+
+    .cam-card:fullscreen .video-box,
+    .cam-card.floating-fullscreen .video-box {
+      flex: 1;
+      min-height: 220px;
+      aspect-ratio: auto;
+      height: auto;
+    }
+
+    .cam-card.siren-ring {
+      border-color: var(--danger);
+      box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.28);
+    }
+
+    .cam-card.talking-ring {
+      border-color: var(--emerald);
+      box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.28);
+    }
+
+    .card-header {
+      padding: 9px 12px;
+      background: var(--surface-2);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    .card-title-wrap {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      min-width: 0;
+    }
+
+    .card-title {
+      font-weight: 700;
+      font-size: 14px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .card-meta {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 11px;
+      color: var(--text-muted);
+      flex-shrink: 0;
+    }
+
+    .pill-mini {
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 10px;
+      font-weight: 700;
+      background: #0c0e12;
+      border: 1px solid var(--border);
+      text-transform: uppercase;
+    }
+
+    .pill-mini.hd { color: #6ee7b7; border-color: rgba(16,185,129,0.4); }
+    .pill-mini.sd { color: #93c5fd; border-color: rgba(59,130,246,0.4); }
+    .pill-mini.eco { color: #fcd34d; border-color: rgba(245,158,11,0.4); }
+    .pill-mini.rec { color: #fff; background: var(--danger); border-color: var(--danger); }
+
+    .video-box {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 16 / 9;
+      background: #000;
+      overflow: hidden;
+      touch-action: none;
+    }
+
+    .video-box video {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+      transform-origin: center center;
+      transition: transform 0.08s ease-out;
+      will-change: transform;
+    }
+
+    .video-overlay-state {
+      position: absolute;
+      inset: 0;
+      background: rgba(9, 9, 11, 0.78);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      color: var(--text-muted);
+      font-size: 12px;
+      pointer-events: none;
+    }
+
+    /* 디지털 줌 컨트롤 바 */
+    .zoom-bar {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      padding: 5px 8px;
+      background: #0c0e12;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      font-size: 11.5px;
+    }
+
+    .zoom-bar input[type="range"] {
+      flex: 1;
+      min-width: 70px;
+      height: 16px;
+    }
+
+    .zoom-val {
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-weight: 700;
+      color: var(--emerald);
+      min-width: 38px;
+      text-align: right;
+    }
+
+    /* 실시간 오디오 레벨 미터 */
+    .audio-meter-wrap {
+      height: 5px;
+      background: #09090b;
+      width: 100%;
+      overflow: hidden;
+    }
+
+    .audio-meter-fill {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, #10b981 0%, #f59e0b 75%, #ef4444 100%);
+      transition: width 0.07s linear;
+    }
+
+    .card-body {
+      padding: 10px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .ctrl-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 6px;
+    }
+
+    .ctrl-grid button {
+      padding: 6px 6px;
+      font-size: 11.5px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .card-tts-row {
+      display: flex;
+      gap: 6px;
+    }
+
+    .card-tts-row input {
+      flex: 1;
+      min-width: 0;
+      padding: 6px 8px;
+      font-size: 12px;
+    }
+
+    .card-tts-row button {
+      padding: 6px 10px;
+      font-size: 12px;
+      flex-shrink: 0;
+    }
+
+    /* OLED 위장 블랙아웃 오버레이 (카메라 모드) */
+    #blackoutOverlay {
+      position: fixed;
+      inset: 0;
+      background: #000000;
+      z-index: 9999;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      color: #262626;
+      user-select: none;
+      touch-action: manipulation;
+    }
+
+    #blackoutHint {
+      text-align: center;
+      padding: 16px;
+      transition: opacity 0.8s ease;
+    }
+
+    #blackoutHint.faded {
+      opacity: 0.06;
+    }
+
+    /* 모달 */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.72);
+      z-index: 200;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+    }
+
+    .modal-box {
+      background: var(--surface);
+      border: 1px solid var(--border-strong);
+      border-radius: var(--radius);
+      max-width: 440px;
+      width: 100%;
+      padding: 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .modal-box h3 {
+      margin: 0;
+      font-size: 16px;
+    }
+
+    /* 토스트 */
+    #toastContainer {
+      position: fixed;
+      bottom: 16px;
+      right: 16px;
+      z-index: 1200;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      max-width: 340px;
+      pointer-events: none;
+    }
+
+    .toast {
+      background: #181c24;
+      border: 1px solid var(--border-strong);
+      border-left: 3px solid var(--emerald);
+      color: var(--text);
+      padding: 10px 13px;
+      border-radius: 8px;
+      font-size: 12.5px;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+    }
+
+    .toast.err {
+      border-left-color: var(--danger);
+    }
+
+    .toast.warn {
+      border-left-color: var(--warn);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- 상단 헤더 -->
+  <header class="topbar">
+    <div class="brand">
+      <span class="brand-dot" id="globalDot"></span>
+      <div>
+        <div class="brand-title">ZERO-MESH CCTV</div>
+        <div class="brand-sub" id="modeSubtitle">동일 와이파이 자동 메쉬 무선 관제</div>
+      </div>
+    </div>
+
+    <div class="header-controls">
+      <div class="channel-pill" title="같은 와이파이 공유기의 공인 IP 해시로 자동 생성된 채널입니다">
+        <span>채널:</span>
+        <code id="headerChannelCode">탐색중...</code>
+        <button type="button" id="btnOpenChannelModal" style="padding:3px 8px;font-size:11px;">채널 변경</button>
+      </div>
+      <span class="status-badge" id="netStatusBadge">네트워크 확인 중</span>
+      <button type="button" id="btnExitMode" class="danger hidden">종료 / 모드 변경</button>
+    </div>
+  </header>
+
+  <main>
+    <!-- 1. 초기 진입 모드 선택 -->
+    <section id="landingSection" class="landing-wrap">
+      <div class="hero-card">
+        <h1>무설정 동일 와이파이 다중 무선 CCTV &amp; 관제센터</h1>
+        <p>같은 와이파이 공유기에 연결된 스마트폰·태블릿·PC가 방 코드 입력 없이 자동으로 하나의 관제 채널에 묶입니다.</p>
+        <div class="net-info-grid">
+          <div class="net-box">
+            <div class="lbl">자동 채널 ID (공인 IP 해시)</div>
+            <div class="val" id="landingChannelVal">계산 중...</div>
+          </div>
+          <div class="net-box">
+            <div class="lbl">감지된 공인 IP / 상태</div>
+            <div class="val" id="landingIpVal" style="font-size:13px;">조회 중...</div>
+          </div>
+          <div class="net-box">
+            <div class="lbl">보안 연결 상태</div>
+            <div class="val" id="landingSecureVal" style="font-size:13px;">확인 중...</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="mode-grid">
+        <div class="mode-card">
+          <div>
+            <h2>📹 카메라 모드 (무선 CCTV 송출기)</h2>
+            <p>이 기기를 현장 CCTV로 등록합니다. 영상과 현장 오디오를 관제센터로 송출하며, 원격 마이크·스피커·TTS 안내방송·사이렌·전후면 전환·블랙아웃 명령을 수행합니다.</p>
+          </div>
+          <div class="form-row">
+            <label for="camNameInput">카메라 식별 이름 (관제센터에서 언제든 수정 가능)</label>
+            <input type="text" id="camNameInput" placeholder="예: 거실 캠, 현관 캠, 매장 입구" maxlength="24" />
+          </div>
+          <div class="form-row">
+            <label for="camInitialFacing">초기 렌즈 방향</label>
+            <select id="camInitialFacing">
+              <option value="environment">후면 카메라 (기본 CCTV 권장)</option>
+              <option value="user">전면 카메라 (셀피/데스크)</option>
+            </select>
+          </div>
+          <button type="button" id="btnStartCamera" class="primary" style="padding:11px;font-size:14px;">카메라 송출 시작</button>
+        </div>
+
+        <div class="mode-card">
+          <div>
+            <h2>🖥️ 관리자 모드 (통합 관제센터)</h2>
+            <p>같은 채널에 접속한 모든 카메라를 자동으로 탐색해 다중 그리드로 모니터링합니다. 모든 청취 음소거, 양방향 말하기, TTS 방송, 비상 사이렌, 녹화/스냅샷을 원격 제어합니다.</p>
+          </div>
+          <div class="net-box" style="margin-top:auto;">
+            <div class="lbl">자동 대역폭 스케일링 &amp; 워치독</div>
+            <div style="font-size:12px;color:var(--text-muted);margin-top:3px;">
+              1~2대 HD(720p) · 3~4대 SD(480p) · 5대+ ECO(360p) 자동 조절 및 끊김 자동 복구
+            </div>
+          </div>
+          <button type="button" id="btnStartAdmin" class="primary" style="padding:11px;font-size:14px;">관제센터 콘솔 열기</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- 2. 카메라 모드 화면 -->
+    <section id="cameraSection" class="cam-view hidden">
+      <div class="cam-stage">
+        <video id="localCamVideo" autoplay playsinline muted></video>
+        <div class="cam-hud-top">
+          <div class="hud-tag">
+            <span class="rec-dot" id="camLiveDot"></span>
+            <span id="camHudName">카메라 준비 중</span>
+            <span id="camHudQuality" class="pill-mini hd">HD</span>
+          </div>
+          <div class="hud-tag" id="camConnState">관제센터 대기 중...</div>
+        </div>
+        <div id="camSirenBanner" class="cam-banner-alert hidden">🚨 비상 사이렌 경보 작동 중</div>
+        <div id="camTtsBanner" class="cam-banner-alert hidden" style="background:rgba(16,185,129,0.92);color:#04130d;">📢 원격 안내방송 송출 중</div>
+      </div>
+
+      <div class="cam-panel">
+        <div style="display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:8px;">
+          <div>
+            <strong id="camStatusHeadline">송출 대기 중</strong>
+            <div style="font-size:12px;color:var(--text-muted);" id="camHardwareDetail">
+              마이크: ON · 스피커: ON · 화면 꺼짐 방지 활성
+            </div>
+          </div>
+          <span class="status-badge online" id="wakeLockBadge">화면 잠금 방지 활성</span>
+        </div>
+
+        <div class="btn-cluster">
+          <button type="button" id="btnCamToggleMic" class="active">🎙️ 마이크 ON</button>
+          <button type="button" id="btnCamToggleSpeaker" class="active">🔊 스피커 ON</button>
+          <button type="button" id="btnCamFlip">🔄 전/후면 전환</button>
+          <button type="button" id="btnCamPause">⏸️ 영상 일시정지</button>
+          <button type="button" id="btnCamBlackout">🌑 OLED 절전 위장</button>
+          <button type="button" id="btnCamStopSiren" class="danger hidden">🔕 사이렌 끄기</button>
+        </div>
+
+        <div style="font-size:12px;color:var(--text-muted);">
+          ※ 현장 기기를 만지지 않아도 관제센터에서 마이크, 스피커, 렌즈 방향, 안내방송, 사이렌, 화면 위장을 모두 원격 제어할 수 있습니다.
+        </div>
+      </div>
+    </section>
+
+    <!-- 3. 관리자(관제센터) 모드 화면 -->
+    <section id="adminSection" class="hidden">
+      <div class="master-bar">
+        <div class="master-row">
+          <div class="master-group">
+            <span class="status-badge online" id="adminOnlineCount">연결 카메라: 0대</span>
+            <button type="button" id="btnMasterListenAll" class="active">🔊 전체 청취 켜기</button>
+            <button type="button" id="btnMasterMuteAll">🔇 전체 청취 음소거</button>
+            <button type="button" id="btnMasterTalkAll">🎙️ 전체 말하기 (OFF)</button>
+            <button type="button" id="btnMasterSirenAll" class="danger">🚨 전체 사이렌</button>
+            <button type="button" id="btnMasterSirenStopAll">🔕 전체 사이렌 정지</button>
+            <button type="button" id="btnRescanPeers">🔄 카메라 재탐색</button>
+          </div>
+
+          <div class="master-group">
+            <button type="button" id="btnMasterFullscreen">⛶ 관제 전체화면</button>
+            <label for="gridColsSelect" style="font-size:12px;color:var(--text-muted);">화면 분할:</label>
+            <select id="gridColsSelect">
+              <option value="auto">자동 분할</option>
+              <option value="1">1분할 (단일)</option>
+              <option value="2">2분할</option>
+              <option value="3">3분할 (3열)</option>
+              <option value="4">4분할 (2x2/4열)</option>
+              <option value="6">6분할 (3x2)</option>
+              <option value="9">9분할 (3x3)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="master-row">
+          <div class="tts-master-box">
+            <select id="ttsTargetSelect" title="방송 대상 선택">
+              <option value="ALL">📢 전체 카메라 방송</option>
+            </select>
+            <input type="text" id="masterTtsInput" placeholder="원격 TTS 안내방송 문구 입력 (예: 잠시 후 매장을 마감합니다)" />
+            <button type="button" id="btnMasterTtsSend" class="primary">📢 방송 송출</button>
+            <button type="button" id="btnMasterTtsStop" class="danger">⏹️ 방송 중단</button>
+          </div>
+        </div>
+
+        <div class="preset-chips">
+          <button type="button" data-tts="관계자 외 출입 금지 구역입니다. 즉시 퇴장해 주시기 바랍니다.">출입 통제 안내</button>
+          <button type="button" data-tts="현재 CCTV 녹화 및 원격 관제가 작동 중입니다.">CCTV 녹화 고지</button>
+          <button type="button" data-tts="택배는 문 앞에 놓아주세요. 감사합니다.">택배 전달 안내</button>
+          <button type="button" data-tts="비상 상황이 감지되었습니다. 안전한 곳으로 대피하세요.">비상 대피 안내</button>
+        </div>
+      </div>
+
+      <div id="cameraGrid" class="cam-grid">
+        <div class="empty-state" id="emptyGridMessage">
+          <div style="font-size:16px;font-weight:700;color:var(--text);margin-bottom:6px;">같은 채널의 카메라를 기다리는 중...</div>
+          <div>동일 와이파이 기기에서 이 페이지를 열고 <strong>[카메라 모드]</strong>를 누르면 자동으로 연결됩니다.</div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- OLED 절전 위장 블랙아웃 오버레이 -->
+  <div id="blackoutOverlay" class="hidden">
+    <div id="blackoutHint">
+      <div style="font-size:14px;font-weight:700;margin-bottom:4px;">OLED 절전 위장 모드 작동 중 (송출 유지됨)</div>
+      <div style="font-size:12px;">화면을 <strong>빠르게 두 번 탭(더블탭)</strong>하거나 <strong>0.8초간 길게 누르면</strong> 해제됩니다.</div>
+    </div>
+  </div>
+
+  <!-- 수동 채널 변경 모달 -->
+  <div id="channelModal" class="modal-backdrop hidden">
+    <div class="modal-box">
+      <h3>채널 ID 설정 / 수동 전환</h3>
+      <p style="margin:0;color:var(--text-muted);font-size:12.5px;">
+        기본적으로 동일 와이파이 공유기의 공인 IP 해시 채널이 자동 지정됩니다. LTE/5G 혼합 테스트나 그룹 분리가 필요할 때만 수동 채널명을 입력하세요.
+      </p>
+      <div class="form-row">
+        <label for="manualChannelInput">채널 이름 (영문/숫자/하이픈)</label>
+        <input type="text" id="manualChannelInput" placeholder="예: store-cam-01" maxlength="32" />
+      </div>
+      <div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;">
+        <button type="button" id="btnResetAutoChannel">자동 와이파이 채널 복귀</button>
+        <div style="display:flex;gap:8px;">
+          <button type="button" id="btnCloseChannelModal">취소</button>
+          <button type="button" id="btnApplyManualChannel" class="primary">적용 및 재접속</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 토스트 컨테이너 -->
+  <div id="toastContainer"></div>
+
+  <!-- 숨겨진 원격 오디오 컨테이너 & 화면 꺼짐 방지 무음 비디오 -->
+  <div id="hiddenAudioPool" class="hidden"></div>
+
+  <script>
+    (() => {
+      'use strict';
+
+      /* =====================================================================
+       * 1. 전역 설정 및 유틸리티
+       * ===================================================================== */
+      const ICE_SERVERS = [
+        { urls: 'stun:stun.l.google.com:19302' },
+        { urls: 'stun:stun1.l.google.com:19302' },
+        { urls: 'stun:stun2.l.google.com:19302' },
+        { urls: 'stun:stun3.l.google.com:19302' },
+        {
+          urls: 'turn:openrelay.metered.ca:80',
+          username: 'openrelayproject',
+          credential: 'openrelayproject'
+        },
+        {
+          urls: 'turn:openrelay.metered.ca:443',
+          username: 'openrelayproject',
+          credential: 'openrelayproject'
+        },
+        {
+          urls: 'turn:openrelay.metered.ca:443?transport=tcp',
+          username: 'openrelayproject',
+          credential: 'openrelayproject'
+        },
+        {
+          urls: 'turn:relay1.expressturn.com:3478',
+          username: 'ef7591255320496894',
+          credential: 'vK8t9P2mQ7xL4nR1'
+        }
+      ];
+
+      const QUALITY_PRESETS = {
+        hd:  { preset: 'hd',  width: 1280, height: 720, frameRate: 24 },
+        sd:  { preset: 'sd',  width: 854,  height: 480, frameRate: 20 },
+        eco: { preset: 'eco', width: 640,  height: 360, frameRate: 15 }
+      };
+
+      const state = {
+        mode: null, // 'camera' | 'admin'
+        autoChannelId: 'local-mesh-default',
+        activeChannelId: 'local-mesh-default',
+        detectedIp: '',
+        peer: null,
+        myPeerId: '',
+        sharedAudioCtx: null,
+        // 카메라 모드 상태
+        cam: {
+          camId: '',
+          label: '',
+          facing: 'environment',
+          micEnabled: true,
+          speakerEnabled: true,
+          paused: false,
+          blackout: false,
+          sirenActive: false,
+          ttsActive: false,
+          adminTalking: false,
+          quality: 'hd',
+          localStream: null,
+          adminConn: null,
+          adminCall: null,
+          incomingAdminCall: null,
+          syncTimer: null,
+          reconnectTimer: null,
+          wakeLock: null,
+          noSleepVideo: null,
+          sirenNodes: null,
+          duckingSavedMic: null,
+          switchingFacing: false
+        },
+        // 관리자 모드 상태
+        admin: {
+          cameras: new Map(), // camId -> cameraRecord
+          adminMicStream: null,
+          talkTarget: null, // null | 'ALL' | camId
+          callQueue: [],
+          queueRunning: false,
+          watchdogTimer: null,
+          meterRaf: null,
+          audioCtx: null,
+          gridCols: 'auto',
+          consoleFullscreen: false,
+          floatingFullscreenCamId: null,
+          suspended: false,
+          lastRecoverAt: 0
+        }
+      };
+
+      const $ = (id) => document.getElementById(id);
+
+      function showToast(msg, type = 'ok') {
+        const container = $('toastContainer');
+        const el = document.createElement('div');
+        el.className = 'toast' + (type === 'err' ? ' err' : type === 'warn' ? ' warn' : '');
+        el.textContent = msg;
+        container.appendChild(el);
+        setTimeout(() => {
+          el.style.opacity = '0';
+          el.style.transition = 'opacity 0.25s';
+          setTimeout(() => el.remove(), 260);
+        }, 3200);
+      }
+
+      function fnv1aHash8(str) {
+        let h = 0x811c9dc5;
+        for (let i = 0; i < str.length; i++) {
+          h ^= str.charCodeAt(i);
+          h = Math.imul(h, 0x01000193);
+        }
+        return (h >>> 0).toString(16).padStart(8, '0');
+      }
+
+      function randomShortId(len = 6) {
+        const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
+        let out = '';
+        const arr = new Uint8Array(len);
+        crypto.getRandomValues(arr);
+        for (let i = 0; i < len; i++) {
+          out += chars[arr[i] % chars.length];
+        }
+        return out;
+      }
+
+      function sanitizeChannel(raw) {
+        const cleaned = (raw || '').trim().toLowerCase().replace(/[^a-z0-9-_]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '');
+        return cleaned || state.autoChannelId;
+      }
+
+      function unlockBrowserAudio() {
+        try {
+          const AudioCtx = window.AudioContext || window.webkitAudioContext;
+          if (AudioCtx) {
+            if (!state.sharedAudioCtx) {
+              state.sharedAudioCtx = new AudioCtx();
+            }
+            if (state.sharedAudioCtx.state === 'suspended') {
+              state.sharedAudioCtx.resume().catch(() => {});
+            }
+          }
+          if (state.admin.audioCtx && state.admin.audioCtx.state === 'suspended') {
+            state.admin.audioCtx.resume().catch(() => {});
+          }
+          if ('speechSynthesis' in window) {
+            window.speechSynthesis.getVoices();
+          }
+        } catch (_) {}
+      }
+
+      ['pointerdown', 'touchstart', 'click'].forEach((evt) => {
+        window.addEventListener(evt, unlockBrowserAudio, { passive: true });
+      });
+
+      /* =====================================================================
+       * 2. 무설정 동일 와이파이 공인 IP 기반 자동 채널 생성
+       * ===================================================================== */
+      async function fetchWithTimeout(url, timeoutMs = 2800) {
+        const ctrl = new AbortController();
+        const t = setTimeout(() => ctrl.abort(), timeoutMs);
+        try {
+          const res = await fetch(url, { signal: ctrl.signal, cache: 'no-store' });
+          if (!res.ok) throw new Error('HTTP ' + res.status);
+          return await res.text();
+        } finally {
+          clearTimeout(t);
+        }
+      }
+
+      async function detectWifiChannel() {
+        const endpoints = [
+          { url: 'https://api.ipify.org?format=json', json: true },
+          { url: 'https://api64.ipify.org?format=json', json: true },
+          { url: 'https://icanhazip.com', json: false },
+          { url: 'https://ifconfig.me/ip', json: false }
+        ];
+
+        let ip = '';
+        for (const ep of endpoints) {
+          try {
+            const raw = await fetchWithTimeout(ep.url, 2600);
+            const candidate = ep.json ? (JSON.parse(raw).ip || '').trim() : raw.trim();
+            if (candidate && candidate.length >= 7 && candidate.length <= 45) {
+              ip = candidate;
+              break;
+            }
+          } catch (_) {}
+        }
+
+        if (ip) {
+          state.detectedIp = ip;
+          state.autoChannelId = 'wifi-' + fnv1aHash8(ip);
+          $('landingIpVal').textContent = ip;
+          $('netStatusBadge').textContent = '동일 와이파이 자동 매칭';
+          $('netStatusBadge').className = 'status-badge online';
+        } else {
+          state.detectedIp = '';
+          state.autoChannelId = 'local-mesh-default';
+          $('landingIpVal').textContent = '로컬 폴백 (IP 조회 차단)';
+          $('netStatusBadge').textContent = '로컬 폴백 채널';
+          $('netStatusBadge').className = 'status-badge error';
+        }
+
+        const savedManual = localStorage.getItem('zeromesh_manual_channel');
+        state.activeChannelId = savedManual ? sanitizeChannel(savedManual) : state.autoChannelId;
+        updateChannelDisplay();
+      }
+
+      function updateChannelDisplay() {
+        $('headerChannelCode').textContent = state.activeChannelId;
+        $('landingChannelVal').textContent = state.activeChannelId;
+      }
+
+      /* =====================================================================
+       * 3. 화면 꺼짐 방지 (Wake Lock + 무음 비디오 루프) & OLED 위장 블랙아웃
+       * ===================================================================== */
+      async function enableKeepAwake() {
+        if ('wakeLock' in navigator) {
+          try {
+            if (state.cam.wakeLock) {
+              await state.cam.wakeLock.release().catch(() => {});
+            }
+            state.cam.wakeLock = await navigator.wakeLock.request('screen');
+            state.cam.wakeLock.addEventListener('release', () => {
+              if (state.mode === 'camera') {
+                $('wakeLockBadge').textContent = '잠금 방지 재요청 대기';
+              }
+            });
+            $('wakeLockBadge').textContent = '화면 잠금 방지 활성';
+            $('wakeLockBadge').className = 'status-badge online';
+          } catch (_) {
+            $('wakeLockBadge').textContent = '폴백 절전 방지 활성';
+          }
+        }
+
+        try {
+          if (!state.cam.noSleepVideo) {
+            const canvas = document.createElement('canvas');
+            canvas.width = 16;
+            canvas.height = 16;
+            const ctx = canvas.getContext('2d');
+            ctx.fillStyle = '#000';
+            ctx.fillRect(0, 0, 16, 16);
+            const stream = canvas.captureStream(1);
+            const v = document.createElement('video');
+            v.muted = true;
+            v.playsInline = true;
+            v.loop = true;
+            v.srcObject = stream;
+            v.style.position = 'fixed';
+            v.style.width = '1px';
+            v.style.height = '1px';
+            v.style.opacity = '0.01';
+            v.style.pointerEvents = 'none';
+            document.body.appendChild(v);
+            state.cam.noSleepVideo = v;
+          }
+          await state.cam.noSleepVideo.play().catch(() => {});
+        } catch (_) {}
+      }
+
+      function disableKeepAwake() {
+        if (state.cam.wakeLock) {
+          state.cam.wakeLock.release().catch(() => {});
+          state.cam.wakeLock = null;
+        }
+        if (state.cam.noSleepVideo) {
+          try {
+            state.cam.noSleepVideo.pause();
+            state.cam.noSleepVideo.srcObject = null;
+            state.cam.noSleepVideo.remove();
+          } catch (_) {}
+          state.cam.noSleepVideo = null;
+        }
+      }
+
+      let blackoutHintTimer = null;
+      function setCameraBlackout(enabled, notifyAdmin = true) {
+        state.cam.blackout = !!enabled;
+        const overlay = $('blackoutOverlay');
+        const hint = $('blackoutHint');
+        if (state.cam.blackout) {
+          overlay.classList.remove('hidden');
+          hint.classList.remove('faded');
+          clearTimeout(blackoutHintTimer);
+          blackoutHintTimer = setTimeout(() => {
+            hint.classList.add('faded');
+          }, 3200);
+        } else {
+          overlay.classList.add('hidden');
+          clearTimeout(blackoutHintTimer);
+        }
+        updateCamHardwareUi();
+        if (notifyAdmin) sendCamStateSync();
+      }
+
+      (function setupBlackoutUnlockGestures() {
+        const overlay = $('blackoutOverlay');
+        let lastTapTime = 0;
+        let pressTimer = null;
+
+        overlay.addEventListener('pointerdown', (e) => {
+          e.preventDefault();
+          const now = Date.now();
+          if (now - lastTapTime <= 320) {
+            clearTimeout(pressTimer);
+            lastTapTime = 0;
+            setCameraBlackout(false, true);
+            showToast('절전 위장 모드가 해제되었습니다.');
+            return;
+          }
+          lastTapTime = now;
+
+          clearTimeout(pressTimer);
+          pressTimer = setTimeout(() => {
+            setCameraBlackout(false, true);
+            showToast('롱프레스로 절전 위장 모드가 해제되었습니다.');
+          }, 750);
+        });
+
+        ['pointerup', 'pointercancel', 'pointerleave'].forEach((evt) => {
+          overlay.addEventListener(evt, () => {
+            clearTimeout(pressTimer);
+          });
+        });
+      })();
+
+      /* =====================================================================
+       * 4. 카메라 모드: 오디오 덕킹, Web Audio 비상 사이렌, 원격 TTS
+       * ===================================================================== */
+      function applyCamAudioDucking() {
+        const shouldDuck = state.cam.sirenActive || state.cam.ttsActive || state.cam.adminTalking;
+        const stream = state.cam.localStream;
+        if (!stream) return;
+
+        if (shouldDuck) {
+          if (state.cam.duckingSavedMic === null) {
+            state.cam.duckingSavedMic = state.cam.micEnabled;
+          }
+          stream.getAudioTracks().forEach((t) => { t.enabled = false; });
+        } else {
+          if (state.cam.duckingSavedMic !== null) {
+            state.cam.micEnabled = state.cam.duckingSavedMic;
+            state.cam.duckingSavedMic = null;
+          }
+          stream.getAudioTracks().forEach((t) => { t.enabled = state.cam.micEnabled; });
+        }
+        updateCamHardwareUi();
+      }
+
+      function setCamSiren(active, notifyAdmin = true) {
+        const want = !!active;
+        if (want && !state.cam.speakerEnabled) {
+          state.cam.speakerEnabled = true;
+        }
+        state.cam.sirenActive = want;
+
+        if (want) {
+          startSirenAudio();
+          $('camSirenBanner').classList.remove('hidden');
+          $('btnCamStopSiren').classList.remove('hidden');
+        } else {
+          stopSirenAudio();
+          $('camSirenBanner').classList.add('hidden');
+          $('btnCamStopSiren').classList.add('hidden');
+        }
+
+        applyCamAudioDucking();
+        if (notifyAdmin) sendCamStateSync();
+      }
+
+      function startSirenAudio() {
+        stopSirenAudio();
+        try {
+          const AudioCtx = window.AudioContext || window.webkitAudioContext;
+          const ctx = state.sharedAudioCtx || new AudioCtx();
+          state.sharedAudioCtx = ctx;
+          if (ctx.state === 'suspended') ctx.resume();
+
+          const osc = ctx.createOscillator();
+          const lfo = ctx.createOscillator();
+          const lfoGain = ctx.createGain();
+          const masterGain = ctx.createGain();
+
+          osc.type = 'sawtooth';
+          osc.frequency.value = 780;
+
+          lfo.type = 'sine';
+          lfo.frequency.value = 2.2;
+          lfoGain.gain.value = 260;
+
+          masterGain.gain.value = 0.45;
+
+          lfo.connect(lfoGain);
+          lfoGain.connect(osc.frequency);
+          osc.connect(masterGain);
+          masterGain.connect(ctx.destination);
+
+          osc.start();
+          lfo.start();
+          state.cam.sirenNodes = { osc, lfo, lfoGain, masterGain };
+        } catch (err) {
+          console.warn('Siren audio failed:', err);
+        }
+      }
+
+      function stopSirenAudio() {
+        if (state.cam.sirenNodes) {
+          try {
+            state.cam.sirenNodes.osc.stop();
+            state.cam.sirenNodes.lfo.stop();
+            state.cam.sirenNodes.osc.disconnect();
+            state.cam.sirenNodes.lfo.disconnect();
+            state.cam.sirenNodes.masterGain.disconnect();
+          } catch (_) {}
+          state.cam.sirenNodes = null;
+        }
+      }
+
+      function playCamTts(text) {
+        if (!text || !('speechSynthesis' in window)) return;
+        if (!state.cam.speakerEnabled) {
+          state.cam.speakerEnabled = true;
+        }
+        window.speechSynthesis.cancel();
+        const utter = new SpeechSynthesisUtterance(text);
+        utter.lang = 'ko-KR';
+        utter.rate = 1.02;
+        utter.pitch = 1.0;
+
+        utter.onstart = () => {
+          state.cam.ttsActive = true;
+          $('camTtsBanner').textContent = '📢 안내방송: ' + text;
+          $('camTtsBanner').classList.remove('hidden');
+          applyCamAudioDucking();
+          sendCamStateSync();
+        };
+
+        const finishTts = () => {
+          state.cam.ttsActive = false;
+          $('camTtsBanner').classList.add('hidden');
+          applyCamAudioDucking();
+          sendCamStateSync();
+        };
+
+        utter.onend = finishTts;
+        utter.onerror = finishTts;
+        window.speechSynthesis.speak(utter);
+      }
+
+      function stopCamTts() {
+        if ('speechSynthesis' in window) {
+          window.speechSynthesis.cancel();
+        }
+        state.cam.ttsActive = false;
+        $('camTtsBanner').classList.add('hidden');
+        applyCamAudioDucking();
+        sendCamStateSync();
+      }
+
+      /* =====================================================================
+       * 5. 카메라 모드 미디어 스트림 & PeerJS 통신
+       * ===================================================================== */
+      async function acquireCameraMedia(facingMode, qualityKey = 'hd', strictExact = false) {
+        const q = QUALITY_PRESETS[qualityKey] || QUALITY_PRESETS.hd;
+        const facingConstraint = strictExact
+          ? { exact: facingMode }
+          : { ideal: facingMode };
+
+        const constraints = {
+          video: {
+            facingMode: facingConstraint,
+            width: { ideal: q.width },
+            height: { ideal: q.height },
+            frameRate: { ideal: q.frameRate, max: 30 }
+          },
+          audio: {
+            echoCancellation: true,
+            noiseSuppression: true,
+            autoGainControl: true
+          }
+        };
+
+        try {
+          return await navigator.mediaDevices.getUserMedia(constraints);
+        } catch (err) {
+          if (strictExact) {
+            try {
+              return await navigator.mediaDevices.getUserMedia({
+                video: {
+                  facingMode: { ideal: facingMode },
+                  width: { ideal: q.width },
+                  height: { ideal: q.height }
+                },
+                audio: {
+                  echoCancellation: true,
+                  noiseSuppression: true,
+                  autoGainControl: true
+                }
+              });
+            } catch (_) {}
+          }
+          return await navigator.mediaDevices.getUserMedia({
+            video: { facingMode: { ideal: facingMode } },
+            audio: {
+              echoCancellation: true,
+              noiseSuppression: true,
+              autoGainControl: true
+            }
+          });
+        }
+      }
+
+      async function switchCamFacing(targetFacing) {
+        if (state.cam.switchingFacing) return;
+        const nextFacing = targetFacing || (state.cam.facing === 'environment' ? 'user' : 'environment');
+        state.cam.switchingFacing = true;
+
+        const prevStream = state.cam.localStream;
+
+        try {
+          if (prevStream) {
+            prevStream.getVideoTracks().forEach((t) => {
+              try { t.stop(); } catch (_) {}
+            });
+          }
+
+          let newStream;
+          try {
+            newStream = await acquireCameraMedia(nextFacing, state.cam.quality, true);
+          } catch (_) {
+            newStream = await acquireCameraMedia(nextFacing, state.cam.quality, false);
+          }
+
+          const newVideoTrack = newStream.getVideoTracks()[0];
+          if (newVideoTrack) {
+            newVideoTrack.enabled = !state.cam.paused;
+          }
+
+          let newAudioTrack = newStream.getAudioTracks()[0];
+          const prevAudioTracks = prevStream ? prevStream.getAudioTracks().filter((t) => t.readyState === 'live') : [];
+
+          if (prevAudioTracks.length > 0 && newAudioTrack) {
+            try { newAudioTrack.stop(); } catch (_) {}
+            newAudioTrack = prevAudioTracks[0];
+          } else if (prevStream) {
+            prevStream.getAudioTracks().forEach((t) => {
+              try { t.stop(); } catch (_) {}
+            });
+          }
+
+          const effectiveMic = state.cam.duckingSavedMic !== null ? false : state.cam.micEnabled;
+          if (newAudioTrack) {
+            newAudioTrack.enabled = effectiveMic;
+          }
+
+          const combinedTracks = [];
+          if (newVideoTrack) combinedTracks.push(newVideoTrack);
+          if (newAudioTrack) combinedTracks.push(newAudioTrack);
+          const combinedStream = new MediaStream(combinedTracks);
+
+          const pc = state.cam.adminCall && state.cam.adminCall.peerConnection;
+          if (pc && newVideoTrack) {
+            const senders = pc.getSenders();
+            const vSender = senders.find((s) => s.track && s.track.kind === 'video')
+              || senders.find((s) => !s.track);
+            if (vSender && typeof vSender.replaceTrack === 'function') {
+              await vSender.replaceTrack(newVideoTrack);
+            }
+          }
+
+          state.cam.localStream = combinedStream;
+          state.cam.facing = nextFacing;
+
+          const localVid = $('localCamVideo');
+          localVid.srcObject = null;
+          localVid.srcObject = combinedStream;
+          localVid.play().catch(() => {});
+
+          updateCamHardwareUi();
+          sendCamStateSync();
+        } catch (err) {
+          if (prevStream) {
+            prevStream.getAudioTracks().forEach((t) => {
+              try { t.stop(); } catch (_) {}
+            });
+          }
+          try {
+            const fallbackStream = await acquireCameraMedia(state.cam.facing, state.cam.quality, false);
+            state.cam.localStream = fallbackStream;
+            $('localCamVideo').srcObject = fallbackStream;
+          } catch (_) {}
+          showToast('카메라 전환 실패: ' + (err && err.message ? err.message : '권한 또는 기기 오류'), 'err');
+        } finally {
+          state.cam.switchingFacing = false;
+        }
+      }
+
+      async function applyCamQuality(presetKey) {
+        const q = QUALITY_PRESETS[presetKey] || QUALITY_PRESETS.hd;
+        state.cam.quality = q.preset;
+        $('camHudQuality').textContent = q.preset.toUpperCase();
+        $('camHudQuality').className = 'pill-mini ' + q.preset;
+
+        const vTrack = state.cam.localStream && state.cam.localStream.getVideoTracks()[0];
+        if (vTrack && vTrack.applyConstraints) {
+          try {
+            await vTrack.applyConstraints({
+              width: { ideal: q.width },
+              height: { ideal: q.height },
+              frameRate: { ideal: q.frameRate }
+            });
+          } catch (_) {}
+        }
+        sendCamStateSync();
+      }
+
+      function updateCamHardwareUi() {
+        const c = state.cam;
+        $('camHudName').textContent = c.label;
+        $('btnCamToggleMic').textContent = c.micEnabled ? '🎙️ 마이크 ON' : '🎙️ 마이크 OFF';
+        $('btnCamToggleMic').className = c.micEnabled ? 'active' : 'danger';
+
+        $('btnCamToggleSpeaker').textContent = c.speakerEnabled ? '🔊 스피커 ON' : '🔇 스피커 OFF';
+        $('btnCamToggleSpeaker').className = c.speakerEnabled ? 'active' : 'danger';
+
+        $('btnCamPause').textContent = c.paused ? '▶️ 송출 재개' : '⏸️ 영상 일시정지';
+        $('btnCamPause').className = c.paused ? 'warn-active' : '';
+
+        $('btnCamBlackout').className = c.blackout ? 'active' : '';
+
+        const remoteAudio = $('camRemoteTalkAudio');
+        if (remoteAudio) {
+          remoteAudio.muted = !c.speakerEnabled;
+        }
+
+        $('camHardwareDetail').textContent =
+          `렌즈: ${c.facing === 'environment' ? '후면' : '전면'} · 마이크: ${c.micEnabled ? 'ON' : 'OFF'} · 스피커: ${c.speakerEnabled ? 'ON' : 'OFF'} · 화질: ${c.quality.toUpperCase()}`;
+      }
+
+      function sendCamStateSync() {
+        const conn = state.cam.adminConn;
+        if (conn && conn.open) {
+          conn.send({
+            type: 'state-sync',
+            camId: state.cam.camId,
+            label: state.cam.label,
+            facing: state.cam.facing,
+            micEnabled: state.cam.micEnabled,
+            speakerEnabled: state.cam.speakerEnabled,
+            blackout: state.cam.blackout,
+            paused: state.cam.paused,
+            sirenActive: state.cam.sirenActive,
+            ttsActive: state.cam.ttsActive,
+            quality: state.cam.quality
+          });
+        }
+      }
+
+      function handleAdminCommand(msg) {
+        if (!msg || typeof msg !== 'object') return;
+        switch (msg.type) {
+          case 'cmd-mic':
+            state.cam.micEnabled = !!msg.enabled;
+            if (state.cam.duckingSavedMic !== null) {
+              state.cam.duckingSavedMic = state.cam.micEnabled;
+            } else if (state.cam.localStream) {
+              state.cam.localStream.getAudioTracks().forEach((t) => { t.enabled = state.cam.micEnabled; });
+            }
+            updateCamHardwareUi();
+            sendCamStateSync();
+            break;
+
+          case 'cmd-speaker':
+            state.cam.speakerEnabled = !!msg.enabled;
+            if (!state.cam.speakerEnabled) {
+              if (state.cam.sirenActive) setCamSiren(false, false);
+              if (state.cam.ttsActive) stopCamTts();
+            }
+            updateCamHardwareUi();
+            sendCamStateSync();
+            break;
+
+          case 'cmd-facing':
+            switchCamFacing(msg.facing);
+            break;
+
+          case 'cmd-pause':
+            state.cam.paused = !!msg.paused;
+            if (state.cam.localStream) {
+              state.cam.localStream.getVideoTracks().forEach((t) => { t.enabled = !state.cam.paused; });
+            }
+            updateCamHardwareUi();
+            sendCamStateSync();
+            break;
+
+          case 'cmd-blackout':
+            setCameraBlackout(!!msg.enabled, true);
+            break;
+
+          case 'cmd-tts':
+            playCamTts(msg.text || '');
+            break;
+
+          case 'cmd-tts-stop':
+            stopCamTts();
+            break;
+
+          case 'cmd-siren':
+            setCamSiren(!!msg.active, true);
+            break;
+
+          case 'cmd-quality':
+            applyCamQuality(msg.preset || 'hd');
+            break;
+
+          case 'cmd-rename':
+            if (msg.label && msg.label.trim()) {
+              state.cam.label = msg.label.trim().slice(0, 24);
+              updateCamHardwareUi();
+              sendCamStateSync();
+            }
+            break;
+
+          case 'cmd-talk-state':
+            state.cam.adminTalking = !!msg.talking;
+            applyCamAudioDucking();
+            break;
+
+          case 'cmd-request-stream':
+            if (state.cam.localStream && state.peer && !state.peer.destroyed) {
+              try {
+                if (state.cam.adminCall) {
+                  try { state.cam.adminCall.close(); } catch (_) {}
+                  state.cam.adminCall = null;
+                }
+                const adminPeerId = `${state.activeChannelId}-admin`;
+                const call = state.peer.call(adminPeerId, state.cam.localStream, {
+                  metadata: { camId: state.cam.camId, label: state.cam.label }
+                });
+                state.cam.adminCall = call;
+              } catch (_) {}
+            }
+            sendCamStateSync();
+            break;
+
+          case 'ping':
+            sendCamStateSync();
+            break;
+        }
+      }
+
+      function connectCameraToAdmin() {
+        if (!state.peer || state.peer.destroyed || state.mode !== 'camera') return;
+        if (state.peer.disconnected) {
+          try { state.peer.reconnect(); } catch (_) {}
+          return;
+        }
+        const adminPeerId = `${state.activeChannelId}-admin`;
+
+        if (!state.cam.adminConn || (!state.cam.adminConn.open && state.cam.adminConn._iceConnectionState !== 'connected')) {
+          try {
+            const conn = state.peer.connect(adminPeerId, { reliable: true });
+            state.cam.adminConn = conn;
+
+            conn.on('open', () => {
+              $('camConnState').textContent = '관제센터 연결됨';
+              $('camStatusHeadline').textContent = '실시간 관제 송출 중';
+              conn.send({
+                type: 'hello',
+                camId: state.cam.camId,
+                label: state.cam.label,
+                facing: state.cam.facing,
+                micEnabled: state.cam.micEnabled,
+                speakerEnabled: state.cam.speakerEnabled,
+                blackout: state.cam.blackout,
+                paused: state.cam.paused,
+                sirenActive: state.cam.sirenActive,
+                quality: state.cam.quality
+              });
+            });
+
+            conn.on('data', handleAdminCommand);
+
+            conn.on('close', () => {
+              if (state.cam.adminConn === conn) {
+                state.cam.adminConn = null;
+              }
+              $('camConnState').textContent = '관제센터 재연결 대기...';
+            });
+
+            conn.on('error', () => {
+              if (state.cam.adminConn === conn) {
+                state.cam.adminConn = null;
+              }
+            });
+          } catch (_) {}
+        }
+
+        const existingCall = state.cam.adminCall;
+        const callDead = !existingCall ||
+          (existingCall.peerConnection && ['closed', 'failed', 'disconnected'].includes(existingCall.peerConnection.connectionState));
+
+        if (callDead && state.cam.localStream) {
+          try {
+            const call = state.peer.call(adminPeerId, state.cam.localStream, {
+              metadata: { camId: state.cam.camId, label: state.cam.label }
+            });
+            state.cam.adminCall = call;
+            call.on('close', () => {
+              if (state.cam.adminCall === call) state.cam.adminCall = null;
+            });
+            call.on('error', () => {
+              if (state.cam.adminCall === call) state.cam.adminCall = null;
+            });
+          } catch (_) {}
+        }
+      }
+
+      async function startCameraMode() {
+        unlockBrowserAudio();
+        const rawName = $('camNameInput').value.trim();
+        const initialFacing = $('camInitialFacing').value;
+        state.cam.camId = randomShortId(6);
+        state.cam.label = rawName || `카메라-${state.cam.camId.slice(0, 3).toUpperCase()}`;
+        state.cam.facing = initialFacing;
+        state.cam.micEnabled = true;
+        state.cam.speakerEnabled = true;
+        state.cam.paused = false;
+        state.cam.blackout = false;
+        state.cam.sirenActive = false;
+        state.cam.ttsActive = false;
+        state.cam.quality = 'hd';
+
+        try {
+          const stream = await acquireCameraMedia(initialFacing, 'hd', true);
+          state.cam.localStream = stream;
+          $('localCamVideo').srcObject = stream;
+        } catch (err) {
+          showToast('카메라/마이크 권한을 허용해 주세요: ' + err.message, 'err');
+          return;
+        }
+
+        state.mode = 'camera';
+        $('landingSection').classList.add('hidden');
+        $('adminSection').classList.add('hidden');
+        $('cameraSection').classList.remove('hidden');
+        $('btnExitMode').classList.remove('hidden');
+        $('modeSubtitle').textContent = `카메라 송출기 (${state.cam.label})`;
+
+        updateCamHardwareUi();
+        await enableKeepAwake();
+
+        const peerId = `${state.activeChannelId}-cam-${state.cam.camId}`;
+        state.myPeerId = peerId;
+        const peer = new Peer(peerId, {
+          debug: 0,
+          config: { iceServers: ICE_SERVERS }
+        });
+        state.peer = peer;
+
+        peer.on('open', () => {
+          $('camConnState').textContent = '관제센터 탐색 중...';
+          connectCameraToAdmin();
+        });
+
+        peer.on('connection', (conn) => {
+          state.cam.adminConn = conn;
+          conn.on('open', () => {
+            $('camConnState').textContent = '관제센터 연결됨';
+            $('camStatusHeadline').textContent = '실시간 관제 송출 중';
+            sendCamStateSync();
+          });
+          conn.on('data', handleAdminCommand);
+          conn.on('close', () => {
+            if (state.cam.adminConn === conn) state.cam.adminConn = null;
+            $('camConnState').textContent = '관제센터 재연결 대기...';
+          });
+        });
+
+        peer.on('call', (call) => {
+          call.answer();
+          state.cam.incomingAdminCall = call;
+          call.on('stream', (remoteStream) => {
+            let audioEl = $('camRemoteTalkAudio');
+            if (!audioEl) {
+              audioEl = document.createElement('audio');
+              audioEl.id = 'camRemoteTalkAudio';
+              audioEl.autoplay = true;
+              audioEl.playsInline = true;
+              $('hiddenAudioPool').appendChild(audioEl);
+            }
+            audioEl.srcObject = remoteStream;
+            audioEl.muted = !state.cam.speakerEnabled;
+            audioEl.play().catch(() => {});
+          });
+          call.on('close', () => {
+            state.cam.adminTalking = false;
+            applyCamAudioDucking();
+          });
+        });
+
+        peer.on('disconnected', () => {
+          if (state.mode === 'camera' && !peer.destroyed) {
+            try { peer.reconnect(); } catch (_) {}
+          }
+        });
+
+        peer.on('error', (err) => {
+          if (err.type !== 'peer-unavailable') {
+            console.warn('Camera peer error:', err.type);
+          }
+        });
+
+        state.cam.syncTimer = setInterval(() => {
+          if (state.mode !== 'camera') return;
+          if (state.cam.adminConn && state.cam.adminConn.open) {
+            sendCamStateSync();
+          }
+          connectCameraToAdmin();
+        }, 3000);
+      }
+
+      /* =====================================================================
+       * 6. 관리자(관제센터) 모드: 다중 카메라 그리드, 전체화면, 디지털 줌
+       * ===================================================================== */
+      function getOrCreateCameraRecord(camId, initialInfo = {}) {
+        let rec = state.admin.cameras.get(camId);
+        if (!rec) {
+          rec = {
+            camId,
+            peerId: `${state.activeChannelId}-cam-${camId}`,
+            label: initialInfo.label || `카메라-${camId.slice(0, 3).toUpperCase()}`,
+            facing: initialInfo.facing || 'environment',
+            micEnabled: initialInfo.micEnabled !== undefined ? initialInfo.micEnabled : true,
+            speakerEnabled: initialInfo.speakerEnabled !== undefined ? initialInfo.speakerEnabled : true,
+            blackout: !!initialInfo.blackout,
+            paused: !!initialInfo.paused,
+            sirenActive: !!initialInfo.sirenActive,
+            ttsActive: !!initialInfo.ttsActive,
+            quality: initialInfo.quality || 'hd',
+            listening: true,
+            zoom: 1.0,
+            panX: 0,
+            panY: 0,
+            conn: null,
+            mediaCall: null,
+            talkCall: null,
+            stream: null,
+            audioEl: null,
+            analyser: null,
+            analyserData: null,
+            recorder: null,
+            recordedChunks: [],
+            recording: false,
+            lastSeen: Date.now()
+          };
+          state.admin.cameras.set(camId, rec);
+          renderCameraCard(rec);
+          updateAdminToolbar();
+          recalculateAdaptiveQuality();
+        }
+        return rec;
+      }
+
+      function removeCameraRecord(camId) {
+        const rec = state.admin.cameras.get(camId);
+        if (!rec) return;
+
+        if (state.admin.floatingFullscreenCamId === camId) {
+          state.admin.floatingFullscreenCamId = null;
+        }
+
+        if (rec.recording && rec.recorder) {
+          try { rec.recorder.stop(); } catch (_) {}
+        }
+        if (rec.audioEl) {
+          try {
+            rec.audioEl.pause();
+            rec.audioEl.srcObject = null;
+            rec.audioEl.remove();
+          } catch (_) {}
+        }
+        if (rec.mediaCall) {
+          try { rec.mediaCall.close(); } catch (_) {}
+        }
+        if (rec.talkCall) {
+          try { rec.talkCall.close(); } catch (_) {}
+        }
+        if (rec.conn) {
+          try { rec.conn.close(); } catch (_) {}
+        }
+
+        const cardEl = document.getElementById(`cam-card-${camId}`);
+        if (cardEl) cardEl.remove();
+
+        state.admin.cameras.delete(camId);
+        if (state.admin.talkTarget === camId) {
+          stopAdminTalkback();
+        }
+        updateAdminToolbar();
+        recalculateAdaptiveQuality();
+      }
+
+      function sendCommandToCam(camId, payload) {
+        const rec = state.admin.cameras.get(camId);
+        if (!rec || !rec.conn || !rec.conn.open) {
+          showToast('카메라 제어 채널이 아직 연결되지 않았습니다.', 'warn');
+          return false;
+        }
+        rec.conn.send(payload);
+        return true;
+      }
+
+      function broadcastCommandToAll(payload) {
+        let count = 0;
+        state.admin.cameras.forEach((rec) => {
+          if (rec.conn && rec.conn.open) {
+            rec.conn.send(payload);
+            count++;
+          }
+        });
+        return count;
+      }
+
+      function recalculateAdaptiveQuality() {
+        const count = state.admin.cameras.size;
+        if (count === 0) return;
+        let targetPreset = 'hd';
+        if (count >= 5) targetPreset = 'eco';
+        else if (count >= 3) targetPreset = 'sd';
+
+        const qObj = QUALITY_PRESETS[targetPreset];
+        state.admin.cameras.forEach((rec) => {
+          if (rec.quality !== targetPreset && rec.conn && rec.conn.open) {
+            rec.conn.send({
+              type: 'cmd-quality',
+              preset: qObj.preset,
+              width: qObj.width,
+              height: qObj.height,
+              frameRate: qObj.frameRate
+            });
+          }
+        });
+      }
+
+      function applyDigitalZoomTransform(rec) {
+        const videoEl = document.getElementById(`video-${rec.camId}`);
+        const rangeEl = document.getElementById(`zoom-range-${rec.camId}`);
+        const valEl = document.getElementById(`zoom-val-${rec.camId}`);
+
+        const z = Math.max(1, Math.min(4, Number(rec.zoom) || 1));
+        rec.zoom = z;
+
+        const maxPan = z > 1 ? ((z - 1) / z) * 42 : 0;
+        if (z <= 1) {
+          rec.panX = 0;
+          rec.panY = 0;
+        } else {
+          rec.panX = Math.max(-maxPan, Math.min(maxPan, rec.panX));
+          rec.panY = Math.max(-maxPan, Math.min(maxPan, rec.panY));
+        }
+
+        if (videoEl) {
+          videoEl.style.transform = `scale(${z.toFixed(2)}) translate(${rec.panX.toFixed(1)}%, ${rec.panY.toFixed(1)}%)`;
+        }
+        if (rangeEl) {
+          rangeEl.value = String(z.toFixed(1));
+        }
+        if (valEl) {
+          valEl.textContent = `${z.toFixed(1)}x`;
+        }
+      }
+
+      function attachZoomGesturesToCard(rec) {
+        const box = document.getElementById(`video-box-${rec.camId}`);
+        if (!box) return;
+
+        let dragging = false;
+        let startX = 0;
+        let startY = 0;
+        let origPanX = 0;
+        let origPanY = 0;
+
+        box.addEventListener('pointerdown', (e) => {
+          if (rec.zoom <= 1) return;
+          dragging = true;
+          startX = e.clientX;
+          startY = e.clientY;
+          origPanX = rec.panX;
+          origPanY = rec.panY;
+          try { box.setPointerCapture(e.pointerId); } catch (_) {}
+        });
+
+        box.addEventListener('pointermove', (e) => {
+          if (!dragging || rec.zoom <= 1) return;
+          const rect = box.getBoundingClientRect();
+          if (!rect.width || !rect.height) return;
+          const dxPct = ((e.clientX - startX) / rect.width) * 100;
+          const dyPct = ((e.clientY - startY) / rect.height) * 100;
+          rec.panX = origPanX + dxPct / rec.zoom;
+          rec.panY = origPanY + dyPct / rec.zoom;
+          applyDigitalZoomTransform(rec);
+        });
+
+        ['pointerup', 'pointercancel'].forEach((evt) => {
+          box.addEventListener(evt, () => {
+            dragging = false;
+          });
+        });
+
+        box.addEventListener('wheel', (e) => {
+          e.preventDefault();
+          const step = e.deltaY < 0 ? 0.2 : -0.2;
+          rec.zoom = Math.max(1, Math.min(4, +(rec.zoom + step).toFixed(1)));
+          applyDigitalZoomTransform(rec);
+        }, { passive: false });
+
+        box.addEventListener('dblclick', () => {
+          rec.zoom = 1.0;
+          rec.panX = 0;
+          rec.panY = 0;
+          applyDigitalZoomTransform(rec);
+        });
+      }
+
+      async function toggleCardFullscreen(camId) {
+        const card = document.getElementById(`cam-card-${camId}`);
+        const rec = state.admin.cameras.get(camId);
+        if (!card || !rec) return;
+
+        if (state.admin.floatingFullscreenCamId === camId) {
+          card.classList.remove('floating-fullscreen');
+          state.admin.floatingFullscreenCamId = null;
+          if (document.fullscreenElement === card && document.exitFullscreen) {
+            await document.exitFullscreen().catch(() => {});
+          }
+          updateCameraCardUi(rec);
+          return;
+        }
+
+        if (state.admin.floatingFullscreenCamId) {
+          const prevId = state.admin.floatingFullscreenCamId;
+          const prevCard = document.getElementById(`cam-card-${prevId}`);
+          if (prevCard) prevCard.classList.remove('floating-fullscreen');
+          state.admin.floatingFullscreenCamId = null;
+          updateCameraCardUi(state.admin.cameras.get(prevId));
+        }
+
+        card.classList.add('floating-fullscreen');
+        state.admin.floatingFullscreenCamId = camId;
+        updateCameraCardUi(rec);
+
+        if (card.requestFullscreen) {
+          card.requestFullscreen().catch(() => {});
+        }
+      }
+
+      async function toggleAdminConsoleFullscreen() {
+        const sec = $('adminSection');
+        if (!sec) return;
+
+        if (state.admin.consoleFullscreen) {
+          sec.classList.remove('console-fullscreen');
+          state.admin.consoleFullscreen = false;
+          if (document.fullscreenElement === sec && document.exitFullscreen) {
+            await document.exitFullscreen().catch(() => {});
+          }
+          syncFullscreenButtons();
+          return;
+        }
+
+        sec.classList.add('console-fullscreen');
+        state.admin.consoleFullscreen = true;
+        syncFullscreenButtons();
+
+        if (sec.requestFullscreen) {
+          sec.requestFullscreen().catch(() => {});
+        }
+      }
+
+      function syncFullscreenButtons() {
+        const btnMasterFs = $('btnMasterFullscreen');
+        if (btnMasterFs) {
+          if (state.admin.consoleFullscreen || (document.fullscreenElement && document.fullscreenElement.id === 'adminSection')) {
+            btnMasterFs.textContent = '🗗 전체화면 종료';
+            btnMasterFs.classList.add('active');
+          } else {
+            btnMasterFs.textContent = '⛶ 관제 전체화면';
+            btnMasterFs.classList.remove('active');
+          }
+        }
+
+        state.admin.cameras.forEach((rec) => {
+          updateCameraCardUi(rec);
+        });
+      }
+
+      document.addEventListener('fullscreenchange', () => {
+        if (!document.fullscreenElement) {
+          if (state.admin.floatingFullscreenCamId) {
+            const c = document.getElementById(`cam-card-${state.admin.floatingFullscreenCamId}`);
+            if (c) c.classList.remove('floating-fullscreen');
+            state.admin.floatingFullscreenCamId = null;
+          }
+          if (state.admin.consoleFullscreen) {
+            const s = $('adminSection');
+            if (s) s.classList.remove('console-fullscreen');
+            state.admin.consoleFullscreen = false;
+          }
+        }
+        syncFullscreenButtons();
+      });
+
+      function attachStreamToCameraRecord(rec, stream) {
+        rec.stream = stream;
+        rec.lastSeen = Date.now();
+
+        const videoEl = document.getElementById(`video-${rec.camId}`);
+        if (videoEl) {
+          if (videoEl.srcObject !== stream) {
+            videoEl.srcObject = stream;
+          }
+          videoEl.muted = true;
+          videoEl.play().catch(() => {});
+        }
+        applyDigitalZoomTransform(rec);
+
+        if (!rec.audioEl) {
+          const audioEl = document.createElement('audio');
+          audioEl.id = `remote-audio-${rec.camId}`;
+          audioEl.autoplay = true;
+          audioEl.playsInline = true;
+          $('hiddenAudioPool').appendChild(audioEl);
+          rec.audioEl = audioEl;
+        }
+        if (rec.audioEl.srcObject !== stream) {
+          rec.audioEl.srcObject = stream;
+        }
+        rec.audioEl.muted = !rec.listening;
+        rec.audioEl.play().catch(() => {});
+
+        setupAudioMeterForCam(rec, stream);
+        updateCameraCardUi(rec);
+      }
+
+      function setupAudioMeterForCam(rec, stream) {
+        if (!stream || stream.getAudioTracks().length === 0) return;
+        try {
+          const AudioCtx = window.AudioContext || window.webkitAudioContext;
+          if (!state.admin.audioCtx) {
+            state.admin.audioCtx = new AudioCtx();
+          }
+          if (state.admin.audioCtx.state === 'suspended') {
+            state.admin.audioCtx.resume().catch(() => {});
+          }
+          const src = state.admin.audioCtx.createMediaStreamSource(stream);
+          const analyser = state.admin.audioCtx.createAnalyser();
+          analyser.fftSize = 256;
+          src.connect(analyser);
+          rec.analyser = analyser;
+          rec.analyserData = new Uint8Array(analyser.frequencyBinCount);
+        } catch (_) {}
+      }
+
+      function startAdminMeterLoop() {
+        cancelAnimationFrame(state.admin.meterRaf);
+        const tick = () => {
+          if (state.mode !== 'admin') return;
+          state.admin.cameras.forEach((rec) => {
+            const bar = document.getElementById(`meter-${rec.camId}`);
+            if (!bar) return;
+            if (!rec.analyser || !rec.micEnabled || !rec.listening) {
+              bar.style.width = '0%';
+              return;
+            }
+            rec.analyser.getByteFrequencyData(rec.analyserData);
+            let sum = 0;
+            for (let i = 0; i < rec.analyserData.length; i++) {
+              sum += rec.analyserData[i];
+            }
+            const avg = sum / rec.analyserData.length;
+            const pct = Math.min(100, Math.round((avg / 90) * 100));
+            bar.style.width = pct + '%';
+          });
+          state.admin.meterRaf = requestAnimationFrame(tick);
+        };
+        state.admin.meterRaf = requestAnimationFrame(tick);
+      }
+
+      function renderCameraCard(rec) {
+        const emptyMsg = $('emptyGridMessage');
+        if (emptyMsg) emptyMsg.classList.add('hidden');
+
+        const card = document.createElement('article');
+        card.className = 'cam-card';
+        card.id = `cam-card-${rec.camId}`;
+        card.innerHTML = `
+          <div class="card-header">
+            <div class="card-title-wrap">
+              <span class="rec-dot"></span>
+              <span class="card-title" id="title-${rec.camId}">${escapeHtml(rec.label)}</span>
+              <button type="button" data-act="rename" data-cam="${rec.camId}" title="카메라 이름 변경" style="padding:2px 6px;font-size:11px;">✏️</button>
+            </div>
+            <div class="card-meta">
+              <span class="pill-mini rec hidden" id="rec-badge-${rec.camId}">REC</span>
+              <span class="pill-mini hd" id="qual-badge-${rec.camId}">${rec.quality.toUpperCase()}</span>
+              <span class="pill-mini" id="facing-badge-${rec.camId}">${rec.facing === 'environment' ? '후면' : '전면'}</span>
+              <button type="button" id="btn-fs-${rec.camId}" data-act="fullscreen" data-cam="${rec.camId}" title="개별 카메라 전체화면" style="padding:2px 7px;font-size:11px;">⛶ 전체</button>
+            </div>
+          </div>
+
+          <div class="video-box" id="video-box-${rec.camId}" title="확대 시 드래그 이동, 더블클릭 1x 초기화">
+            <video id="video-${rec.camId}" autoplay playsinline muted></video>
+            <div class="video-overlay-state" id="overlay-${rec.camId}">
+              <div>영상 스트림 연결 중...</div>
+            </div>
+          </div>
+
+          <div class="audio-meter-wrap" title="실시간 현장 오디오 레벨">
+            <div class="audio-meter-fill" id="meter-${rec.camId}"></div>
+          </div>
+
+          <div class="card-body">
+            <div class="zoom-bar">
+              <span>🔍 디지털 줌</span>
+              <input type="range" id="zoom-range-${rec.camId}" data-zoom-cam="${rec.camId}" min="1" max="4" step="0.1" value="1" />
+              <span class="zoom-val" id="zoom-val-${rec.camId}">1.0x</span>
+              <button type="button" data-act="zoom-reset" data-cam="${rec.camId}" style="padding:2px 7px;font-size:11px;">1x</button>
+            </div>
+
+            <div class="ctrl-grid">
+              <button type="button" id="btn-listen-${rec.camId}" data-act="listen" data-cam="${rec.camId}" class="active">🔊 청취 ON</button>
+              <button type="button" id="btn-mic-${rec.camId}" data-act="mic" data-cam="${rec.camId}" class="active">🎙️ 현장마이크</button>
+              <button type="button" id="btn-spk-${rec.camId}" data-act="speaker" data-cam="${rec.camId}" class="active">📢 현장스피커</button>
+
+              <button type="button" id="btn-talk-${rec.camId}" data-act="talk" data-cam="${rec.camId}">🗣️ 말하기</button>
+              <button type="button" id="btn-siren-${rec.camId}" data-act="siren" data-cam="${rec.camId}" class="danger">🚨 사이렌</button>
+              <button type="button" id="btn-flip-${rec.camId}" data-act="flip" data-cam="${rec.camId}">🔄 렌즈전환</button>
+
+              <button type="button" id="btn-pause-${rec.camId}" data-act="pause" data-cam="${rec.camId}">⏸️ 일시정지</button>
+              <button type="button" id="btn-blackout-${rec.camId}" data-act="blackout" data-cam="${rec.camId}">🌑 위장화면</button>
+              <button type="button" id="btn-rec-${rec.camId}" data-act="record" data-cam="${rec.camId}">⏺️ 녹화</button>
+            </div>
+
+            <div class="card-tts-row">
+              <input type="text" id="tts-input-${rec.camId}" placeholder="이 카메라에만 보낼 TTS 안내문구..." />
+              <button type="button" data-act="tts" data-cam="${rec.camId}" class="primary">송출</button>
+              <button type="button" data-act="snap" data-cam="${rec.camId}" title="PNG 스냅샷 저장">📸</button>
+            </div>
+          </div>
+        `;
+        $('cameraGrid').appendChild(card);
+        attachZoomGesturesToCard(rec);
+        updateCameraCardUi(rec);
+      }
+
+      function escapeHtml(str) {
+        return String(str).replace(/[&<>"']/g, (m) => ({
+          '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+        }[m]));
+      }
+
+      function updateCameraCardUi(rec) {
+        if (!rec) return;
+        const card = document.getElementById(`cam-card-${rec.camId}`);
+        if (!card) return;
+
+        const isCardFullscreen =
+          document.fullscreenElement === card || state.admin.floatingFullscreenCamId === rec.camId;
+
+        const btnFs = document.getElementById(`btn-fs-${rec.camId}`);
+        if (btnFs) {
+          btnFs.textContent = isCardFullscreen ? '🗗 닫기' : '⛶ 전체';
+          btnFs.className = isCardFullscreen ? 'active' : '';
+        }
+
+        const isTalking = state.admin.talkTarget === rec.camId || state.admin.talkTarget === 'ALL';
+        card.classList.toggle('siren-ring', !!rec.sirenActive);
+        card.classList.toggle('talking-ring', isTalking);
+
+        const titleEl = document.getElementById(`title-${rec.camId}`);
+        if (titleEl) titleEl.textContent = rec.label;
+
+        const qualEl = document.getElementById(`qual-badge-${rec.camId}`);
+        if (qualEl) {
+          qualEl.textContent = (rec.quality || 'hd').toUpperCase();
+          qualEl.className = 'pill-mini ' + (rec.quality || 'hd');
+        }
+
+        const facingEl = document.getElementById(`facing-badge-${rec.camId}`);
+        if (facingEl) facingEl.textContent = rec.facing === 'environment' ? '후면' : '전면';
+
+        const recBadge = document.getElementById(`rec-badge-${rec.camId}`);
+        if (recBadge) recBadge.classList.toggle('hidden', !rec.recording);
+
+        const overlay = document.getElementById(`overlay-${rec.camId}`);
+        if (overlay) {
+          if (!rec.stream) {
+            overlay.classList.remove('hidden');
+            overlay.innerHTML = '<div>영상 스트림 재연결 중...</div>';
+          } else if (rec.paused) {
+            overlay.classList.remove('hidden');
+            overlay.innerHTML = '<div>⏸️ 원격 일시정지 상태</div>';
+          } else {
+            overlay.classList.add('hidden');
+          }
+        }
+
+        const btnListen = document.getElementById(`btn-listen-${rec.camId}`);
+        if (btnListen) {
+          btnListen.textContent = rec.listening ? '🔊 청취 ON' : '🔇 청취 OFF';
+          btnListen.className = rec.listening ? 'active' : '';
+        }
+
+        const btnMic = document.getElementById(`btn-mic-${rec.camId}`);
+        if (btnMic) {
+          btnMic.textContent = rec.micEnabled ? '🎙️ 마이크 ON' : '🎙️ 마이크 OFF';
+          btnMic.className = rec.micEnabled ? 'active' : 'danger';
+        }
+
+        const btnSpk = document.getElementById(`btn-spk-${rec.camId}`);
+        if (btnSpk) {
+          btnSpk.textContent = rec.speakerEnabled ? '🔊 스피커 ON' : '🔇 스피커 OFF';
+          btnSpk.className = rec.speakerEnabled ? 'active' : 'danger';
+        }
+
+        const btnTalk = document.getElementById(`btn-talk-${rec.camId}`);
+        if (btnTalk) {
+          btnTalk.textContent = isTalking ? '🗣️ 송출 중...' : '🗣️ 말하기';
+          btnTalk.className = isTalking ? 'active' : '';
+        }
+
+        const btnSiren = document.getElementById(`btn-siren-${rec.camId}`);
+        if (btnSiren) {
+          btnSiren.textContent = rec.sirenActive ? '🚨 사이렌 ON' : '🚨 사이렌';
+          btnSiren.className = rec.sirenActive ? 'danger active' : 'danger';
+        }
+
+        const btnPause = document.getElementById(`btn-pause-${rec.camId}`);
+        if (btnPause) {
+          btnPause.textContent = rec.paused ? '▶️ 재개' : '⏸️ 일시정지';
+          btnPause.className = rec.paused ? 'warn-active' : '';
+        }
+
+        const btnBlackout = document.getElementById(`btn-blackout-${rec.camId}`);
+        if (btnBlackout) {
+          btnBlackout.textContent = rec.blackout ? '🌑 위장 ON' : '🌑 위장화면';
+          btnBlackout.className = rec.blackout ? 'active' : '';
+        }
+
+        const btnRec = document.getElementById(`btn-rec-${rec.camId}`);
+        if (btnRec) {
+          btnRec.textContent = rec.recording ? '⏹️ 녹화중지' : '⏺️ 녹화';
+          btnRec.className = rec.recording ? 'danger active' : '';
+        }
+      }
+
+      function updateAdminToolbar() {
+        const count = state.admin.cameras.size;
+        $('adminOnlineCount').textContent = `연결 카메라: ${count}대`;
+
+        const emptyMsg = $('emptyGridMessage');
+        if (emptyMsg) {
+          emptyMsg.classList.toggle('hidden', count > 0);
+        }
+
+        const sel = $('ttsTargetSelect');
+        const prev = sel.value;
+        sel.innerHTML = '<option value="ALL">📢 전체 카메라 방송</option>';
+        state.admin.cameras.forEach((rec) => {
+          const opt = document.createElement('option');
+          opt.value = rec.camId;
+          opt.textContent = `📍 ${rec.label}`;
+          sel.appendChild(opt);
+        });
+        if ([...sel.options].some((o) => o.value === prev)) {
+          sel.value = prev;
+        }
+
+        const talkAllBtn = $('btnMasterTalkAll');
+        if (state.admin.talkTarget === 'ALL') {
+          talkAllBtn.textContent = '🎙️ 전체 말하기 (송출 중)';
+          talkAllBtn.className = 'active';
+        } else {
+          talkAllBtn.textContent = '🎙️ 전체 말하기 (OFF)';
+          talkAllBtn.className = '';
+        }
+      }
+
+      /* =====================================================================
+       * 7. 양방향 음성 대화(Talkback), 개별 녹화(.webm), 스냅샷(.png)
+       * ===================================================================== */
+      async function ensureAdminMicStream() {
+        if (state.admin.adminMicStream && state.admin.adminMicStream.active) {
+          return state.admin.adminMicStream;
+        }
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: false,
+          audio: {
+            echoCancellation: true,
+            noiseSuppression: true,
+            autoGainControl: true
+          }
+        });
+        state.admin.adminMicStream = stream;
+        return stream;
+      }
+
+      async function toggleAdminTalkback(target) {
+        unlockBrowserAudio();
+        if (state.admin.talkTarget === target) {
+          stopAdminTalkback();
+          return;
+        }
+
+        stopAdminTalkback();
+        let micStream;
+        try {
+          micStream = await ensureAdminMicStream();
+        } catch (err) {
+          showToast('관제센터 마이크 권한이 필요합니다: ' + err.message, 'err');
+          return;
+        }
+
+        state.admin.talkTarget = target;
+        const targets = target === 'ALL'
+          ? [...state.admin.cameras.values()]
+          : [state.admin.cameras.get(target)].filter(Boolean);
+
+        targets.forEach((rec) => {
+          if (rec.conn && rec.conn.open) {
+            rec.conn.send({ type: 'cmd-speaker', enabled: true });
+            rec.conn.send({ type: 'cmd-talk-state', talking: true });
+          }
+          try {
+            const call = state.peer.call(rec.peerId, micStream, {
+              metadata: { role: 'admin-talkback' }
+            });
+            rec.talkCall = call;
+          } catch (_) {}
+          updateCameraCardUi(rec);
+        });
+
+        updateAdminToolbar();
+        showToast(target === 'ALL' ? '전체 카메라로 양방향 음성 송출 시작' : '선택 카메라로 양방향 음성 송출 시작');
+      }
+
+      function stopAdminTalkback() {
+        if (!state.admin.talkTarget) return;
+        state.admin.cameras.forEach((rec) => {
+          if (rec.talkCall) {
+            try { rec.talkCall.close(); } catch (_) {}
+            rec.talkCall = null;
+          }
+          if (rec.conn && rec.conn.open) {
+            rec.conn.send({ type: 'cmd-talk-state', talking: false });
+          }
+          updateCameraCardUi(rec);
+        });
+        state.admin.talkTarget = null;
+        updateAdminToolbar();
+      }
+
+      function toggleCameraRecording(camId) {
+        const rec = state.admin.cameras.get(camId);
+        if (!rec || !rec.stream) {
+          showToast('녹화할 영상 스트림이 없습니다.', 'warn');
+          return;
+        }
+
+        if (rec.recording && rec.recorder) {
+          rec.recorder.stop();
+          return;
+        }
+
+        const mimeCandidates = [
+          'video/webm;codecs=vp9,opus',
+          'video/webm;codecs=vp8,opus',
+          'video/webm'
+        ];
+        const mimeType = mimeCandidates.find((m) => MediaRecorder.isTypeSupported(m)) || '';
+
+        try {
+          rec.recordedChunks = [];
+          const recorder = mimeType
+            ? new MediaRecorder(rec.stream, { mimeType })
+            : new MediaRecorder(rec.stream);
+
+          recorder.ondataavailable = (e) => {
+            if (e.data && e.data.size > 0) {
+              rec.recordedChunks.push(e.data);
+            }
+          };
+
+          recorder.onstop = () => {
+            rec.recording = false;
+            updateCameraCardUi(rec);
+            if (rec.recordedChunks.length > 0) {
+              const blob = new Blob(rec.recordedChunks, { type: mimeType || 'video/webm' });
+              const url = URL.createObjectURL(blob);
+              const ts = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
+              const a = document.createElement('a');
+              a.href = url;
+              a.download = `${rec.label}_${ts}.webm`;
+              a.click();
+              setTimeout(() => URL.revokeObjectURL(url), 5000);
+              showToast(`녹화 파일 저장 완료: ${rec.label}_${ts}.webm`);
+            }
+          };
+
+          recorder.start(1000);
+          rec.recorder = recorder;
+          rec.recording = true;
+          updateCameraCardUi(rec);
+          showToast(`[${rec.label}] 실시간 녹화 시작`);
+        } catch (err) {
+          showToast('녹화 시작 실패: ' + err.message, 'err');
+        }
+      }
+
+      function captureCameraSnapshot(camId) {
+        const rec = state.admin.cameras.get(camId);
+        const videoEl = document.getElementById(`video-${camId}`);
+        if (!rec || !videoEl || !videoEl.videoWidth) {
+          showToast('캡처할 영상 프레임이 준비되지 않았습니다.', 'warn');
+          return;
+        }
+
+        const canvas = document.createElement('canvas');
+        canvas.width = videoEl.videoWidth;
+        canvas.height = videoEl.videoHeight;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(videoEl, 0, 0, canvas.width, canvas.height);
+
+        canvas.toBlob((blob) => {
+          if (!blob) return;
+          const url = URL.createObjectURL(blob);
+          const ts = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = `${rec.label}_snap_${ts}.png`;
+          a.click();
+          setTimeout(() => URL.revokeObjectURL(url), 4000);
+          showToast(`스냅샷 저장 완료: ${rec.label}_snap_${ts}.png`);
+        }, 'image/png');
+      }
+
+      /* =====================================================================
+       * 8. 관리자(관제센터) PeerJS 초기화, 복귀 자동 복구 & 워치독
+       * ===================================================================== */
+      function enqueueAdminConnect(camId) {
+        if (!state.admin.callQueue.includes(camId)) {
+          state.admin.callQueue.push(camId);
+        }
+        processAdminConnectQueue();
+      }
+
+      async function processAdminConnectQueue() {
+        if (state.admin.queueRunning) return;
+        state.admin.queueRunning = true;
+
+        while (state.admin.callQueue.length > 0 && state.mode === 'admin') {
+          const camId = state.admin.callQueue.shift();
+          const rec = state.admin.cameras.get(camId);
+          if (rec && state.peer && !state.peer.destroyed && !state.peer.disconnected) {
+            if (!rec.conn || !rec.conn.open) {
+              try {
+                const conn = state.peer.connect(rec.peerId, { reliable: true });
+                bindAdminDataConnection(conn, camId);
+              } catch (_) {}
+            } else {
+              try {
+                rec.conn.send({ type: 'ping' });
+                if (!rec.stream) {
+                  rec.conn.send({ type: 'cmd-request-stream' });
+                }
+              } catch (_) {}
+            }
+          }
+          await new Promise((r) => setTimeout(r, 320));
+        }
+
+        state.admin.queueRunning = false;
+      }
+
+      function bindAdminDataConnection(conn, fallbackCamId = '') {
+        conn.on('open', () => {
+          try { conn.send({ type: 'ping' }); } catch (_) {}
+          const rec = fallbackCamId && state.admin.cameras.get(fallbackCamId);
+          if (rec) {
+            rec.conn = conn;
+            rec.lastSeen = Date.now();
+            if (!rec.stream) {
+              try { conn.send({ type: 'cmd-request-stream' }); } catch (_) {}
+            }
+          }
+        });
+
+        conn.on('data', (msg) => {
+          if (!msg || typeof msg !== 'object') return;
+          const cid = msg.camId || fallbackCamId;
+          if (!cid) return;
+
+          if (msg.type === 'hello' || msg.type === 'state-sync') {
+            const rec = getOrCreateCameraRecord(cid, msg);
+            rec.conn = conn;
+            rec.lastSeen = Date.now();
+            if (msg.label) rec.label = msg.label;
+            if (msg.facing) rec.facing = msg.facing;
+            if (msg.micEnabled !== undefined) rec.micEnabled = !!msg.micEnabled;
+            if (msg.speakerEnabled !== undefined) rec.speakerEnabled = !!msg.speakerEnabled;
+            if (msg.blackout !== undefined) rec.blackout = !!msg.blackout;
+            if (msg.paused !== undefined) rec.paused = !!msg.paused;
+            if (msg.sirenActive !== undefined) rec.sirenActive = !!msg.sirenActive;
+            if (msg.ttsActive !== undefined) rec.ttsActive = !!msg.ttsActive;
+            if (msg.quality) rec.quality = msg.quality;
+
+            if (!rec.stream && conn.open) {
+              try { conn.send({ type: 'cmd-request-stream' }); } catch (_) {}
+            }
+
+            updateCameraCardUi(rec);
+            updateAdminToolbar();
+          }
+        });
+
+        conn.on('close', () => {
+          if (fallbackCamId) {
+            const rec = state.admin.cameras.get(fallbackCamId);
+            if (rec && rec.conn === conn) {
+              rec.conn = null;
+            }
+          }
+        });
+      }
+
+      function createAdminPeerInstance() {
+        if (state.peer) {
+          try { state.peer.destroy(); } catch (_) {}
+          state.peer = null;
+        }
+        const adminPeerId = `${state.activeChannelId}-admin`;
+        state.myPeerId = adminPeerId;
+
+        const peer = new Peer(adminPeerId, {
+          debug: 0,
+          config: { iceServers: ICE_SERVERS }
+        });
+        state.peer = peer;
+
+        peer.on('open', () => {
+          startAdminMeterLoop();
+          state.admin.cameras.forEach((_, camId) => enqueueAdminConnect(camId));
+        });
+
+        peer.on('connection', (conn) => {
+          const match = (conn.peer || '').match(/-cam-([a-z0-9]+)$/i);
+          const camId = match ? match[1] : '';
+          if (camId) {
+            const rec = getOrCreateCameraRecord(camId);
+            rec.conn = conn;
+            rec.lastSeen = Date.now();
+          }
+          bindAdminDataConnection(conn, camId);
+        });
+
+        peer.on('call', (call) => {
+          const meta = call.metadata || {};
+          const match = (call.peer || '').match(/-cam-([a-z0-9]+)$/i);
+          const camId = meta.camId || (match ? match[1] : randomShortId(6));
+          const rec = getOrCreateCameraRecord(camId, { label: meta.label });
+
+          if (rec.mediaCall && rec.mediaCall !== call) {
+            try { rec.mediaCall.close(); } catch (_) {}
+          }
+          rec.mediaCall = call;
+
+          call.answer();
+          call.on('stream', (remoteStream) => {
+            attachStreamToCameraRecord(rec, remoteStream);
+          });
+          call.on('close', () => {
+            if (rec.mediaCall === call) {
+              rec.stream = null;
+              updateCameraCardUi(rec);
+            }
+          });
+          call.on('error', () => {
+            if (rec.mediaCall === call) {
+              rec.stream = null;
+              updateCameraCardUi(rec);
+            }
+          });
+        });
+
+        peer.on('disconnected', () => {
+          if (state.mode === 'admin' && !peer.destroyed) {
+            try { peer.reconnect(); } catch (_) {}
+          }
+        });
+
+        peer.on('error', (err) => {
+          if (err.type === 'unavailable-id') {
+            showToast('동일 채널에 이미 관제센터가 열려 있습니다.', 'err');
+          } else if (err.type !== 'peer-unavailable') {
+            console.warn('Admin peer error:', err.type);
+          }
+        });
+      }
+
+      function recoverAdminSession(forceFullReconnect = false) {
+        if (state.mode !== 'admin') return;
+        const now = Date.now();
+        if (!forceFullReconnect && now - state.admin.lastRecoverAt < 900) return;
+        state.admin.lastRecoverAt = now;
+        state.admin.suspended = false;
+
+        unlockBrowserAudio();
+
+        if (!state.peer || state.peer.destroyed) {
+          createAdminPeerInstance();
+        } else if (state.peer.disconnected) {
+          try { state.peer.reconnect(); } catch (_) {
+            createAdminPeerInstance();
+          }
+        }
+
+        state.admin.cameras.forEach((rec, camId) => {
+          const videoEl = document.getElementById(`video-${camId}`);
+          if (videoEl && rec.stream) {
+            if (videoEl.srcObject !== rec.stream) {
+              videoEl.srcObject = rec.stream;
+            }
+            videoEl.muted = true;
+            videoEl.play().catch(() => {});
+          }
+          if (rec.audioEl && rec.stream) {
+            if (rec.audioEl.srcObject !== rec.stream) {
+              rec.audioEl.srcObject = rec.stream;
+            }
+            rec.audioEl.muted = !rec.listening;
+            rec.audioEl.play().catch(() => {});
+          }
+
+          const pc = rec.mediaCall && rec.mediaCall.peerConnection;
+          const iceState = pc ? pc.iceConnectionState : 'none';
+          const connState = pc ? pc.connectionState : 'none';
+          const streamDead = !rec.stream
+            || rec.stream.getTracks().every((t) => t.readyState === 'ended')
+            || ['failed', 'closed'].includes(iceState)
+            || ['failed', 'closed'].includes(connState);
+
+          if (forceFullReconnect || !rec.conn || !rec.conn.open || streamDead) {
+            if (streamDead) {
+              rec.stream = null;
+              if (rec.mediaCall) {
+                try { rec.mediaCall.close(); } catch (_) {}
+                rec.mediaCall = null;
+              }
+            }
+            enqueueAdminConnect(camId);
+          } else {
+            try {
+              rec.conn.send({ type: 'ping' });
+              if (!rec.stream) rec.conn.send({ type: 'cmd-request-stream' });
+            } catch (_) {
+              enqueueAdminConnect(camId);
+            }
+          }
+          updateCameraCardUi(rec);
+        });
+
+        startAdminMeterLoop();
+        updateAdminToolbar();
+      }
+
+      function startAdminMode() {
+        unlockBrowserAudio();
+        state.mode = 'admin';
+        state.admin.suspended = false;
+        $('landingSection').classList.add('hidden');
+        $('cameraSection').classList.add('hidden');
+        $('adminSection').classList.remove('hidden');
+        $('btnExitMode').classList.remove('hidden');
+        $('modeSubtitle').textContent = '통합 관제센터 (관리자 콘솔)';
+
+        createAdminPeerInstance();
+        showToast(`관제센터 가동됨 (채널: ${state.activeChannelId})`);
+
+        state.admin.watchdogTimer = setInterval(() => {
+          if (state.mode !== 'admin') return;
+          if (document.visibilityState === 'hidden') return;
+
+          if (!state.peer || state.peer.destroyed) {
+            createAdminPeerInstance();
+            return;
+          }
+          if (state.peer.disconnected) {
+            try { state.peer.reconnect(); } catch (_) {}
+          }
+
+          const now = Date.now();
+          state.admin.cameras.forEach((rec, camId) => {
+            const pc = rec.mediaCall && rec.mediaCall.peerConnection;
+            const streamEnded = rec.stream && rec.stream.getTracks().every((t) => t.readyState === 'ended');
+            const pcBad = pc && ['failed', 'closed'].includes(pc.iceConnectionState);
+
+            if (streamEnded || pcBad) {
+              rec.stream = null;
+            }
+
+            if (!rec.conn || !rec.conn.open || !rec.stream) {
+              enqueueAdminConnect(camId);
+            } else {
+              try { rec.conn.send({ type: 'ping' }); } catch (_) {}
+            }
+
+            if (now - rec.lastSeen > 45000 && (!rec.conn || !rec.conn.open) && !rec.stream) {
+              removeCameraRecord(camId);
+            }
+          });
+        }, 3500);
+      }
+
+      /* =====================================================================
+       * 9. 탭 전환 / 백그라운드 복귀 자동 복구 & 실제 종료 처리
+       * ===================================================================== */
+      document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible') {
+          if (state.mode === 'camera') {
+            enableKeepAwake();
+            const localVid = $('localCamVideo');
+            if (localVid && state.cam.localStream) {
+              localVid.srcObject = state.cam.localStream;
+              localVid.play().catch(() => {});
+            }
+            connectCameraToAdmin();
+            sendCamStateSync();
+          } else if (state.mode === 'admin') {
+            recoverAdminSession(false);
+          }
+        } else if (document.visibilityState === 'hidden') {
+          if (state.mode === 'admin') {
+            state.admin.suspended = true;
+            cancelAnimationFrame(state.admin.meterRaf);
+          }
+        }
+      });
+
+      window.addEventListener('focus', () => {
+        if (state.mode === 'admin') {
+          recoverAdminSession(false);
+        } else if (state.mode === 'camera') {
+          connectCameraToAdmin();
+        }
+      });
+
+      window.addEventListener('pageshow', (e) => {
+        if (state.mode === 'admin') {
+          recoverAdminSession(!!e.persisted);
+        } else if (state.mode === 'camera') {
+          connectCameraToAdmin();
+        }
+      });
+
+      window.addEventListener('pagehide', (e) => {
+        // BFCache 진입 시에는 세션을 유지해 복귀 시 즉시 재연결
+        if (e.persisted) return;
+        if (state.mode === 'admin') {
+          state.admin.suspended = true;
+        }
+      });
+
+      window.addEventListener('beforeunload', () => {
+        if (state.peer && !state.peer.destroyed) {
+          try { state.peer.destroy(); } catch (_) {}
+        }
+      });
+
+      function cleanupAllSessions() {
+        clearInterval(state.cam.syncTimer);
+        clearTimeout(state.cam.reconnectTimer);
+        stopSirenAudio();
+        if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+        disableKeepAwake();
+        setCameraBlackout(false, false);
+
+        if (state.cam.localStream) {
+          state.cam.localStream.getTracks().forEach((t) => t.stop());
+          state.cam.localStream = null;
+        }
+        $('localCamVideo').srcObject = null;
+
+        clearInterval(state.admin.watchdogTimer);
+        cancelAnimationFrame(state.admin.meterRaf);
+        stopAdminTalkback();
+        if (state.admin.adminMicStream) {
+          state.admin.adminMicStream.getTracks().forEach((t) => t.stop());
+          state.admin.adminMicStream = null;
+        }
+        [...state.admin.cameras.keys()].forEach((cid) => removeCameraRecord(cid));
+        state.admin.callQueue = [];
+        state.admin.floatingFullscreenCamId = null;
+        state.admin.consoleFullscreen = false;
+        $('adminSection').classList.remove('console-fullscreen');
+
+        if (document.fullscreenElement && document.exitFullscreen) {
+          document.exitFullscreen().catch(() => {});
+        }
+
+        if (state.peer) {
+          try { state.peer.destroy(); } catch (_) {}
+          state.peer = null;
+        }
+
+        state.mode = null;
+        $('cameraSection').classList.add('hidden');
+        $('adminSection').classList.add('hidden');
+        $('landingSection').classList.remove('hidden');
+        $('btnExitMode').classList.add('hidden');
+        $('modeSubtitle').textContent = '동일 와이파이 자동 메쉬 무선 관제';
+      }
+
+      $('btnStartCamera').addEventListener('click', startCameraMode);
+      $('btnStartAdmin').addEventListener('click', startAdminMode);
+      $('btnExitMode').addEventListener('click', () => {
+        cleanupAllSessions();
+        showToast('초기 화면으로 돌아왔습니다.');
+      });
+
+      $('btnCamToggleMic').addEventListener('click', () => {
+        state.cam.micEnabled = !state.cam.micEnabled;
+        if (state.cam.duckingSavedMic !== null) {
+          state.cam.duckingSavedMic = state.cam.micEnabled;
+        } else if (state.cam.localStream) {
+          state.cam.localStream.getAudioTracks().forEach((t) => { t.enabled = state.cam.micEnabled; });
+        }
+        updateCamHardwareUi();
+        sendCamStateSync();
+      });
+
+      $('btnCamToggleSpeaker').addEventListener('click', () => {
+        state.cam.speakerEnabled = !state.cam.speakerEnabled;
+        if (!state.cam.speakerEnabled) {
+          if (state.cam.sirenActive) setCamSiren(false, false);
+          if (state.cam.ttsActive) stopCamTts();
+        }
+        updateCamHardwareUi();
+        sendCamStateSync();
+      });
+
+      $('btnCamFlip').addEventListener('click', () => switchCamFacing());
+
+      $('btnCamPause').addEventListener('click', () => {
+        state.cam.paused = !state.cam.paused;
+        if (state.cam.localStream) {
+          state.cam.localStream.getVideoTracks().forEach((t) => { t.enabled = !state.cam.paused; });
+        }
+        updateCamHardwareUi();
+        sendCamStateSync();
+      });
+
+      $('btnCamBlackout').addEventListener('click', () => {
+        setCameraBlackout(!state.cam.blackout, true);
+      });
+
+      $('btnCamStopSiren').addEventListener('click', () => {
+        setCamSiren(false, true);
+      });
+
+      $('btnMasterListenAll').addEventListener('click', () => {
+        unlockBrowserAudio();
+        state.admin.cameras.forEach((rec) => {
+          rec.listening = true;
+          if (rec.audioEl) {
+            rec.audioEl.muted = false;
+            rec.audioEl.play().catch(() => {});
+          }
+          updateCameraCardUi(rec);
+        });
+        showToast('모든 카메라 청취가 켜졌습니다.');
+      });
+
+      $('btnMasterMuteAll').addEventListener('click', () => {
+        state.admin.cameras.forEach((rec) => {
+          rec.listening = false;
+          if (rec.audioEl) rec.audioEl.muted = true;
+          updateCameraCardUi(rec);
+        });
+        showToast('모든 카메라 청취를 음소거했습니다.');
+      });
+
+      $('btnMasterTalkAll').addEventListener('click', () => {
+        toggleAdminTalkback('ALL');
+      });
+
+      $('btnMasterSirenAll').addEventListener('click', () => {
+        const sent = broadcastCommandToAll({ type: 'cmd-siren', active: true });
+        showToast(sent ? `${sent}대 카메라에 비상 사이렌 발령` : '연결된 카메라가 없습니다.', sent ? 'warn' : 'err');
+      });
+
+      $('btnMasterSirenStopAll').addEventListener('click', () => {
+        broadcastCommandToAll({ type: 'cmd-siren', active: false });
+        showToast('전체 사이렌 정지 명령 전송');
+      });
+
+      $('btnRescanPeers').addEventListener('click', () => {
+        recoverAdminSession(true);
+        showToast('연결 상태를 재점검하고 재연결을 시도했습니다.');
+      });
+
+      $('btnMasterFullscreen').addEventListener('click', toggleAdminConsoleFullscreen);
+
+      $('gridColsSelect').addEventListener('change', (e) => {
+        const val = e.target.value;
+        state.admin.gridCols = val;
+        const grid = $('cameraGrid');
+        grid.classList.remove('cols-1', 'cols-2', 'cols-3', 'cols-4');
+        if (val === '1' || val === '2' || val === '3' || val === '4') {
+          grid.classList.add('cols-' + val);
+        } else if (val === '6') {
+          grid.classList.add('cols-3');
+        } else if (val === '9') {
+          grid.classList.add('cols-3');
+        }
+      });
+
+      $('btnMasterTtsSend').addEventListener('click', () => {
+        const text = $('masterTtsInput').value.trim();
+        if (!text) {
+          showToast('방송할 안내문구를 입력해 주세요.', 'warn');
+          return;
+        }
+        const target = $('ttsTargetSelect').value;
+        const payload = { type: 'cmd-tts', text, id: randomShortId(5) };
+        if (target === 'ALL') {
+          const cnt = broadcastCommandToAll(payload);
+          showToast(cnt ? `전체(${cnt}대) 안내방송 송출` : '연결된 카메라가 없습니다.', cnt ? 'ok' : 'warn');
+        } else {
+          if (sendCommandToCam(target, payload)) {
+            showToast('선택 카메라에 안내방송 송출');
+          }
+        }
+      });
+
+      $('btnMasterTtsStop').addEventListener('click', () => {
+        broadcastCommandToAll({ type: 'cmd-tts-stop' });
+        showToast('진행 중인 원격 방송을 중단했습니다.');
+      });
+
+      document.querySelectorAll('.preset-chips button').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          $('masterTtsInput').value = btn.getAttribute('data-tts') || '';
+          $('btnMasterTtsSend').click();
+        });
+      });
+
+      $('cameraGrid').addEventListener('input', (e) => {
+        const range = e.target.closest('input[type="range"][data-zoom-cam]');
+        if (!range) return;
+        const camId = range.getAttribute('data-zoom-cam');
+        const rec = state.admin.cameras.get(camId);
+        if (!rec) return;
+        rec.zoom = parseFloat(range.value) || 1;
+        applyDigitalZoomTransform(rec);
+      });
+
+      $('cameraGrid').addEventListener('click', (e) => {
+        const btn = e.target.closest('button[data-act]');
+        if (!btn) return;
+        unlockBrowserAudio();
+
+        const act = btn.getAttribute('data-act');
+        const camId = btn.getAttribute('data-cam');
+        const rec = state.admin.cameras.get(camId);
+        if (!rec) return;
+
+        switch (act) {
+          case 'fullscreen':
+            toggleCardFullscreen(camId);
+            break;
+
+          case 'zoom-reset':
+            rec.zoom = 1.0;
+            rec.panX = 0;
+            rec.panY = 0;
+            applyDigitalZoomTransform(rec);
+            break;
+
+          case 'listen':
+            rec.listening = !rec.listening;
+            if (rec.audioEl) {
+              rec.audioEl.muted = !rec.listening;
+              if (rec.listening) rec.audioEl.play().catch(() => {});
+            }
+            updateCameraCardUi(rec);
+            break;
+
+          case 'mic':
+            sendCommandToCam(camId, { type: 'cmd-mic', enabled: !rec.micEnabled });
+            break;
+
+          case 'speaker':
+            sendCommandToCam(camId, { type: 'cmd-speaker', enabled: !rec.speakerEnabled });
+            break;
+
+          case 'talk':
+            toggleAdminTalkback(camId);
+            break;
+
+          case 'siren':
+            sendCommandToCam(camId, { type: 'cmd-siren', active: !rec.sirenActive });
+            break;
+
+          case 'flip':
+            sendCommandToCam(camId, {
+              type: 'cmd-facing',
+              facing: rec.facing === 'environment' ? 'user' : 'environment'
+            });
+            break;
+
+          case 'pause':
+            sendCommandToCam(camId, { type: 'cmd-pause', paused: !rec.paused });
+            break;
+
+          case 'blackout':
+            sendCommandToCam(camId, { type: 'cmd-blackout', enabled: !rec.blackout });
+            break;
+
+          case 'record':
+            toggleCameraRecording(camId);
+            break;
+
+          case 'snap':
+            captureCameraSnapshot(camId);
+            break;
+
+          case 'tts': {
+            const input = document.getElementById(`tts-input-${camId}`);
+            const text = input ? input.value.trim() : '';
+            if (!text) {
+              showToast('개별 송출할 문구를 입력하세요.', 'warn');
+              return;
+            }
+            if (sendCommandToCam(camId, { type: 'cmd-tts', text, id: randomShortId(5) })) {
+              showToast(`[${rec.label}] 개별 방송 송출`);
+            }
+            break;
+          }
+
+          case 'rename': {
+            const nextName = prompt('새 카메라 이름을 입력하세요:', rec.label);
+            if (nextName && nextName.trim()) {
+              sendCommandToCam(camId, { type: 'cmd-rename', label: nextName.trim().slice(0, 24) });
+            }
+            break;
+          }
+        }
+      });
+
+      $('btnOpenChannelModal').addEventListener('click', () => {
+        $('manualChannelInput').value = state.activeChannelId;
+        $('channelModal').classList.remove('hidden');
+      });
+
+      $('btnCloseChannelModal').addEventListener('click', () => {
+        $('channelModal').classList.add('hidden');
+      });
+
+      $('btnResetAutoChannel').addEventListener('click', () => {
+        localStorage.removeItem('zeromesh_manual_channel');
+        state.activeChannelId = state.autoChannelId;
+        updateChannelDisplay();
+        $('channelModal').classList.add('hidden');
+        if (state.mode) {
+          const prevMode = state.mode;
+          cleanupAllSessions();
+          if (prevMode === 'camera') startCameraMode();
+          else startAdminMode();
+        }
+        showToast('자동 와이파이 채널로 복귀했습니다.');
+      });
+
+      $('btnApplyManualChannel').addEventListener('click', () => {
+        const nextChan = sanitizeChannel($('manualChannelInput').value);
+        localStorage.setItem('zeromesh_manual_channel', nextChan);
+        state.activeChannelId = nextChan;
+        updateChannelDisplay();
+        $('channelModal').classList.add('hidden');
+        if (state.mode) {
+          const prevMode = state.mode;
+          cleanupAllSessions();
+          if (prevMode === 'camera') startCameraMode();
+          else startAdminMode();
+        }
+        showToast(`채널이 [${nextChan}]으로 전환되었습니다.`);
+      });
+
+      (function init() {
+        const isSecure = window.isSecureContext;
+        $('landingSecureVal').textContent = isSecure ? 'HTTPS 보안 컨텍스트 정상' : '주의: HTTPS 필요 (Netlify 권장)';
+        $('landingSecureVal').style.color = isSecure ? 'var(--emerald)' : 'var(--danger)';
+        detectWifiChannel();
+      })();
+    })();
+  </script>
+</body>
+</html>
